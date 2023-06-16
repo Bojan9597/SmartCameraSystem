@@ -48,7 +48,7 @@ class MainWindowPTZ(QWidget):
         self.capturePTZ = None
         self.readPTZ = False
 
-        self.handleLogin()
+        # self.handleLogin()
 
     @pyqtSlot(float, float)
     def moveToPosition(self, x, y):

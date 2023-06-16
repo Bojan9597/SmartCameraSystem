@@ -93,8 +93,7 @@ class CoordinatesCalculator:
                     best_error = error
                     best_ptzX = ptzX
                     best_ptzY = ptzY
-
-                print(error)
+                    print(f"Epsilon: {epsilon}, Smoothing: {smoothing}, Error: {error}")
 
             # Limit ptzX and ptzY to the range of -1 to 1
             ptzX = max(min(best_ptzX, 1), -1)

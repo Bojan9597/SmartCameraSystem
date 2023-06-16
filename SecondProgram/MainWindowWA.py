@@ -49,10 +49,7 @@ class MainWindowWA(QWidget):
         # Enable mouse tracking on the label
         self.video_label.setMouseTracking(True)
 
-        # Connect mouse press event to the label
-        self.video_label.mousePressEvent = self.video_label_mousePressEvent
-
-        self.handleLogin()
+        # self.handleLogin()
 
     def handleLogin(self):
         try:
@@ -77,35 +74,6 @@ class MainWindowWA(QWidget):
         except Exception as e:
 
             ErrorHandler.displayErrorMessage(f"This is error in login handler for WA \n{e}")
-
-    def video_label_mousePressEvent(self, event):
-        try:
-            if self.captureWA is not None and self.captureWA.isOpened():
-                # Get the mouse position relative to the label
-                pos = event.pos()
-                width_ratio = pos.x() / self.video_label.width()
-                height_ratio = pos.y() / self.video_label.height()
-                print("hah")
-                # Get the frame dimensions
-                retWA, frameWA = self.captureWA.read()
-                if retWA:
-                    frame_height, frame_width, _ = frameWA.shape
-
-                    # Calculate the coordinates in the frame
-                    x = int(width_ratio * frame_width)
-                    y = int(height_ratio * frame_height)
-
-                    # Calculate the coordinates in the frame
-                    self.corespondingX = x
-                    self.corespondingY = y
-                    print(self.corespondingX, self.corespondingY)
-                    print("this bellow is x, y")
-                    print(x,y)
-                    newX, newY = self.coordinatesCalculator.calculate_corresponding_coordinate(x, y)
-                    print(f"Coordinates in the frame: ({newX}, {newY})")
-                    self.moveToPositionSignal.emit(newX,newY)
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"This is error in mouse press event for WA camera: \n {e}")
 
     def calculateWindowDimensions(self, width, height):
         try:
