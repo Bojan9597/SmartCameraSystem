@@ -1,0 +1,2 @@
+LinearND Interpolation: Method: linear Error: 0.10156464456598228
+LinearND Interpolation: Method: linear Error: 0.10156464456598228

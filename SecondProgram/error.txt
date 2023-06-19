@@ -1,0 +1,15 @@
+Number of points: 10
+
+LinearND Interpolation: Method: linear Error: 0.3433304139512143
+LinearND Interpolation: Method: nearest Error: 0.3433304139512143
+LinearND Interpolation: Method: cubic Error: 0.3433304139512143
+Number of points: 15
+
+LinearND Interpolation: Method: linear Error: 0.18013048117094524
+LinearND Interpolation: Method: nearest Error: 0.18013048117094524
+LinearND Interpolation: Method: cubic Error: 0.18013048117094524
+Number of points: 30
+
+LinearND Interpolation: Method: linear Error: 0.10156464456598228
+LinearND Interpolation: Method: nearest Error: 0.10156464456598228
+LinearND Interpolation: Method: cubic Error: 0.10156464456598228
