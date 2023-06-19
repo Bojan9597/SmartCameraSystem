@@ -1,2 +1,9 @@
 LinearND Interpolation: Method: linear Error: 0.10156464456598228
-LinearND Interpolation: Method: linear Error: 0.10156464456598228
+LinearND Interpolation: Method: True Error: 0.10156464456598228
+LinearND Interpolation: Method: False Error: 0.10156464456598228
+Grid Interpolation: Method: linear Rescale: False Error: 0.10156464456598228
+Grid Interpolation: Method: linear Rescale: False Error: 0.10156464456598228
+Grid Interpolation: Method: linear Rescale: False Error: 0.10156464456598228
+Grid Interpolation: Method: linear Rescale: False Error: 0.10156464456598228
+Grid Interpolation: Method: linear Rescale: False Error: 0.10156464456598228
+Grid Interpolation: Method: linear Rescale: False Error: 0.10156464456598228
