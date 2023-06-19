@@ -189,13 +189,21 @@ class MainWindow(QWidget):
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"This is error in adding red cross: \n {e}")
 
+    def add_dots_on_image(self,frame):
+        width, height = frame.shape[:2]
+        for i in range(6):
+            for j in range(5):
+                cv2.circle(frame, (int(height/5*i), int(width/4*j)), 10, (0, 0, 255), -1)
+
     def update_video_frames(self):
         try:
             if self.readWA and self.captureWA is not None and self.captureWA.isOpened():
                 retWA, frameWA = self.captureWA.read()
+                if retWA == False:
+                    self.captureWA = cv2.VideoCapture(self.camera_url_wa)
                 if retWA:
                     frameWA_rgb = cv2.cvtColor(frameWA, cv2.COLOR_BGR2RGB)
-
+                    self.add_dots_on_image(frameWA_rgb)
                     imageWA = QImage(
                         frameWA_rgb.data,
                         frameWA_rgb.shape[1],
@@ -213,8 +221,9 @@ class MainWindow(QWidget):
         try:
             if self.readPTZ and self.capturePTZ is not None and self.capturePTZ.isOpened():
                 retPTZ, framePTZ = self.capturePTZ.read()
+                if retPTZ == False:
+                    self.capturePTZ = cv2.VideoCapture(self.camera_url_ptz)
                 if retPTZ:
-                    print("hohoho")
                     framePTZ_rgb = cv2.cvtColor(framePTZ, cv2.COLOR_BGR2RGB)
                     # Add the red cross to the frame
                     self.add_red_cross(framePTZ_rgb)

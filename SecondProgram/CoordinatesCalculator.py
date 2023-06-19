@@ -2,12 +2,18 @@ import numpy as np
 from scipy.interpolate import Rbf
 import itertools
 from ErrorHandler import ErrorHandler
-
+import cv2
+import numpy as np
+from scipy.interpolate import griddata
+from scipy.interpolate import Rbf
 class CoordinatesCalculator:
     def __init__(self, file):
         self.coordinatesWA = self.read_coordinatesWA(file)
         self.coordinatesPTZ = self.read_coordinatesPTZ(file)
-
+        self.pani = []
+        self.tilti= []
+        self.calculateCorrespondingCoordinate(self.coordinatesWA, self.coordinatesPTZ, "linear", rescale=True)
+        # self.calculateCorrespondingCoordinateRbf()
     def read_coordinatesWA(self, file):
         try:
             coordinates = []
@@ -49,65 +55,138 @@ class CoordinatesCalculator:
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"Error in extracting coordinates for PTZ: \n {e}")
 
-    def calculate_corresponding_coordinate(self, x, y):
-        try:
-            src_points = np.array(self.coordinatesWA, dtype=np.float32)
-            dst_points = np.array(self.coordinatesPTZ, dtype=np.float32)
+    def getNearestNotNan(self, i, j, matrix):
+        counter = 1
+        while True:
+            for k in range(i - counter, i + counter):
+                for l in range(j - counter, j + counter):
+                    if k > 0 and k < 1080 and l > 0 and l < 1920:
+                        if not np.isnan(matrix[k][l]):
+                            return matrix[k][l]
+                    else:
+                        continue
+            counter += 1
 
-            # Separate input and output coordinates
-            input_x = src_points[:, 0]
-            input_y = src_points[:, 1]
-            output_ptzX = dst_points[:, 0]
-            output_ptzY = dst_points[:, 1]
+    def calculateCorrespondingCoordinateRbf(self,coordinatesWA,  coordinatesPTZ, method,epsilon,smoothness):
+        x = np.linspace(0, 1920, 1920)
+        y = np.linspace(0, 1080, 1080)
+        X, Y = np.meshgrid(x, y)
 
-            # Define the parameter combinations to evaluate
-            epsilon_values = [0.01,0.05, 0.1,0.5, 1.0,5,  10.0]  # Adjust the epsilon values as needed
-            smoothing_functions = ['linear', 'cubic', 'quintic']  # Choose the desired smoothing functions
-            grid_resolution = 1000  # Adjust the grid resolution as needed
+        coordinateWAX = np.array(coordinatesWA)[:, 0]
+        coordinateWAY = np.array(coordinatesWA)[:, 1]
+        coordinatePTZpan = np.array(coordinatesPTZ)[:, 0]
+        coordinatePTZtilt = np.array(coordinatesPTZ)[:, 1]
 
-            best_ptzX = None
-            best_ptzY = None
-            best_error = float('inf')
+        # Perform RBF interpolation for pan
+        rbf_pan = Rbf(coordinateWAX, coordinateWAY, coordinatePTZpan, function=method, epsilon=epsilon, smooth=smoothness)
+        self.pani = rbf_pan(X, Y)
 
-            # Perform grid search to find the best RBF interpolation function
-            for epsilon, smoothing in itertools.product(epsilon_values, smoothing_functions):
-                function_kwargs = {'function': smoothing, 'smooth': epsilon}
+        # Perform RBF interpolation for tilt
+        rbf_tilt = Rbf(coordinateWAX, coordinateWAY, coordinatePTZtilt, function=method, epsilon=epsilon, smooth=smoothness)
+        self.tilti = rbf_tilt(X, Y)
 
-                # Create the RBF interpolation function
-                rbf_x = Rbf(input_x, input_y, output_ptzX, **function_kwargs)
-                rbf_y = Rbf(input_x, input_y, output_ptzY, **function_kwargs)
+        for i in range(1080):
+            for j in range(1920):
+                if np.isnan(self.pani[i][j]):
+                    self.pani[i][j] = self.getNearestNotNan(i, j, self.pani)
 
-                # Create a finer grid for interpolation
-                x_grid = np.linspace(min(input_x), max(input_x), grid_resolution)
-                y_grid = np.linspace(min(input_y), max(input_y), grid_resolution)
+                if np.isnan(self.tilti[i][j]):
+                    self.tilti[i][j] = self.getNearestNotNan(i, j, self.tilti)
 
-                # Calculate the corresponding ptzX and ptzY for the given x and y
-                ptzX = rbf_x(x, y)
-                ptzY = rbf_y(x, y)
+    def calculateCorrespondingCoordinate(self,coordinatesWA, coordinatesPTZ,method,rescale):
+        x = np.linspace(0, 192, 192)
+        y = np.linspace(0, 108, 108)
+        X, Y = np.meshgrid(x, y)
 
-                # Calculate the error between the interpolated values and the actual values
-                error = np.abs(ptzX - output_ptzX).mean() + np.abs(ptzY - output_ptzY).mean()
+        self.coordinateWAX = np.array(coordinatesWA)[:, 0] // 10
+        self.coordinateWAY = np.array(coordinatesWA)[:, 1] // 10
 
-                # Update the best results if the current error is lower
-                if error < best_error:
-                    best_error = error
-                    best_ptzX = ptzX
-                    best_ptzY = ptzY
-                    print(f"Epsilon: {epsilon}, Smoothing: {smoothing}, Error: {error}")
+        self.coordinatePTZpan = np.array(coordinatesPTZ)[:, 0]
+        self.coordinatePTZtilt = np.array(coordinatesPTZ)[:, 1]
 
-            # Limit ptzX and ptzY to the range of -1 to 1
-            ptzX = max(min(best_ptzX, 1), -1)
-            ptzY = max(min(best_ptzY, 1), -1)
+        self.pani = griddata((self.coordinateWAX, self.coordinateWAY), self.coordinatePTZpan, (X, Y), method=method,rescale=rescale)
+        self.tilti = griddata((self.coordinateWAX, self.coordinateWAY), self.coordinatePTZtilt, (X, Y), method=method,rescale=rescale)
+        for i in range(108):
+            for j in range(192):
+                if np.isnan(self.pani[i][j]):
+                    self.pani[i][j] = self.getNearestNotNan(i, j, self.pani)
 
-            return ptzX, ptzY
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"Error in calculating corresponding coordinates: \n {e}")
-            return 0, 0
+                if np.isnan(self.tilti[i][j]):
+                    self.tilti[i][j] = self.getNearestNotNan(i, j, self.tilti)
 
+    def getNearestNotNan(self, i, j, matrix):
+        counter = 1
+        while True:
+            for k in range(i - counter, i + counter):
+                for l in range(j - counter, j + counter):
+                    if k > 0 and k < 108 and l > 0 and l < 192:
+                        if not np.isnan(matrix[k][l]):
+                            return matrix[k][l]
+                    else:
+                        continue
+            counter += 1
+    def getTiltAndPan(self,x, y):
+        return self.pani[int(y/10)][int(x/10)], self.tilti[int(y/10)][int(x/10)]
 
+    def errorCalculation(self):
+        self.coordinatesWA = self.read_coordinatesWA("Coordinates.txt")
+        self.coordinatesPTZ = self.read_coordinatesPTZ("Coordinates.txt")
+        test_values_wa = self.read_coordinatesWA("testCoordinates.txt")
+        test_values_ptz = self.read_coordinatesPTZ("testCoordinates.txt")
+        methodRbf = ['multiquadric', 'inverse', 'gaussian', 'linear', 'cubic', 'quintic', 'thin_plate']
+        best_error = (float('inf'))
+        methodGrid = ['nearest', 'linear', 'cubic']
+        epsilon = [0.1, 0.5, 1, 2, 5, 10]
+        smoothness = [0.1, 0.5, 1, 2, 5, 10]
+        rescale = [True, False]
+        file = open("error.txt", "w")
+        for i in range(3, 0, -1):
+
+            coordinatesWA = self.coordinatesWA[::i]
+            coordinatesPTZ = self.coordinatesPTZ[::i]
+            with open("error.txt", "a") as file:
+                file.write(f"Number of points: {len(coordinatesWA)}\n\n")
+            for method in methodRbf:
+                for e in epsilon:
+                    for s in smoothness:
+                        try:
+                            self.calculateCorrespondingCoordinateRbf(coordinatesWA, coordinatesPTZ, method, e, s)
+                            error = 0
+                            for i in range(len(test_values_wa)):
+                                pan, tilt = self.getTiltAndPan(test_values_wa[i][0], test_values_wa[i][1])
+                                error += abs(pan - test_values_ptz[i][0]) + abs(tilt - test_values_ptz[i][1])
+                            with open("error.txt", "a") as file:
+                                file.write(
+                                    f"RBF Interpolation: Method: {method} Epsilon: {e} Smoothness: {s} Error: {error}\n")
+                            if error < best_error:
+                                best_error = error
+                                best_method = method
+                                best_epsilon = e
+                                best_smoothness = s
+                        except:
+                            continue
+            for method in methodGrid:
+                for r in rescale:
+                    try:
+                        self.calculateCorrespondingCoordinate(coordinatesWA, coordinatesPTZ, method, r)
+                        error = 0
+                        for i in range(len(test_values_wa)):
+                            pan, tilt = self.getTiltAndPan(test_values_wa[i][0], test_values_wa[i][1])
+                            error += abs(pan - test_values_ptz[i][0]) + abs(tilt - test_values_ptz[i][1])
+                        with open("error.txt", "a") as file:
+                            file.write(f"Grid Interpolation: Method: {method} Rescale: {r} Error: {error}\n")
+                        if error < best_error:
+                            best_error = error
+                            best_method = method
+                            best_rescale = r
+                    except:
+                        continue
+        if best_method in methodRbf:
+            print(
+                f"Best method: {best_method} Best epsilon: {best_epsilon} Best smoothness: {best_smoothness} Error: {best_error}")
+        else:
+            print(f"Best method: {best_method} Best rescale: {best_rescale} Error: {best_error}")
 # Usage example:
-calculator = CoordinatesCalculator('Coordinates.txt')
-ptz_x, ptz_y = 123, 648
-wa_x, wa_y = calculator.calculate_corresponding_coordinate(ptz_x, ptz_y)
-print("Corresponding Coordinates:")
-print(f"X: {wa_x}, Y: {wa_y}")
+# calculator = CoordinatesCalculator('Coordinates.txt')
+
+# calculator.errorCalculation()

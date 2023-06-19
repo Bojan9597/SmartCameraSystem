@@ -99,38 +99,38 @@ class Ptz_Handler:
 
                 t = time.time() - t0
 
-                if key == "w" or key == "Key.up":  # w
-                    self.move_up(MainWindow, MainWindow.ptz)
-                    print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
-                    if txt is None:
-                        print("^")
-                    else:
-                        txt.write("%.2f\t--\t%s\n" % (t, "^"))
-                        txt.flush()
-                if key == "s" or key == "Key.down":  # s
-                    self.move_down(MainWindow, MainWindow.ptz)
-                    print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
-                    if txt is None:
-                        print("v")
-                    else:
-                        txt.write("%.2f\t--\t%s\n" % (t, "v"))
-                        txt.flush()
-                if key == "a" or key == "Key.left":  # a
-                    self.move_left(MainWindow, MainWindow.ptz)
-                    print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
-                    if txt is None:
-                        print("<")
-                    else:
-                        txt.write("%.2f\t--\t%s\n" % (t, "<"))
-                        txt.flush()
-                if key == "d" or key == "Key.right":  # d
-                    self.move_right(MainWindow, MainWindow.ptz)
-                    print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
-                    if txt is None:
-                        print(">")
-                    else:
-                        txt.write("%.2f\t--\t%s\n" % (t, ">"))
-                        txt.flush()
+                # if key == "w" or key == "Key.up":  # w
+                #     self.move_up(MainWindow, MainWindow.ptz)
+                #     print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
+                #     if txt is None:
+                #         print("^")
+                #     else:
+                #         txt.write("%.2f\t--\t%s\n" % (t, "^"))
+                #         txt.flush()
+                # if key == "s" or key == "Key.down":  # s
+                #     self.move_down(MainWindow, MainWindow.ptz)
+                #     print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
+                #     if txt is None:
+                #         print("v")
+                #     else:
+                #         txt.write("%.2f\t--\t%s\n" % (t, "v"))
+                #         txt.flush()
+                # if key == "a" or key == "Key.left":  # a
+                #     self.move_left(MainWindow, MainWindow.ptz)
+                #     print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
+                #     if txt is None:
+                #         print("<")
+                #     else:
+                #         txt.write("%.2f\t--\t%s\n" % (t, "<"))
+                #         txt.flush()
+                # if key == "d" or key == "Key.right":  # d
+                #     self.move_right(MainWindow, MainWindow.ptz)
+                #     print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
+                #     if txt is None:
+                #         print(">")
+                #     else:
+                #         txt.write("%.2f\t--\t%s\n" % (t, ">"))
+                #         txt.flush()
                 if key == "i":  # p
                     self.zoom_up(MainWindow.ptz)
                     print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
@@ -178,41 +178,41 @@ class Ptz_Handler:
     
     def zeep_pythonvalue(self, xmlvalue):
         return xmlvalue
-    def move_up(self, MainWindow, ptz):
-        try:
-            self.request.Velocity.Zoom.x = 0
-            self.request.Velocity.PanTilt.x = 0
-            self.request.Velocity.PanTilt.y = self.YMAX
-            ptz.ContinuousMove(self.request)
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"This is error message in move up: \n {e}" )
+    # def move_up(self, MainWindow, ptz):
+    #     try:
+    #         self.request.Velocity.Zoom.x = 0
+    #         self.request.Velocity.PanTilt.x = 0
+    #         self.request.Velocity.PanTilt.y = self.YMAX
+    #         ptz.ContinuousMove(self.request)
+    #     except Exception as e:
+    #         ErrorHandler.displayErrorMessage(f"This is error message in move up: \n {e}" )
+    #
+    # def move_down(self,MainWindow, ptz):
+    #     try:
+    #         self.request.Velocity.Zoom.x = 0
+    #         self.request.Velocity.PanTilt.x = 0
+    #         self.request.Velocity.PanTilt.y = self.YMIN
+    #         ptz.ContinuousMove(self.request)
+    #     except Exception as e:
+    #         ErrorHandler.displayErrorMessage(f"This is error message in move down: \n {e}" )
 
-    def move_down(self,MainWindow, ptz):
-        try:
-            self.request.Velocity.Zoom.x = 0
-            self.request.Velocity.PanTilt.x = 0
-            self.request.Velocity.PanTilt.y = self.YMIN
-            ptz.ContinuousMove(self.request)
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"This is error message in move down: \n {e}" )
-
-    def move_right(self, MainWindow, ptz):
-        try:
-            self.request.Velocity.Zoom.x = 0
-            self.request.Velocity.PanTilt.x = self.XMAX
-            self.request.Velocity.PanTilt.y = 0
-            ptz.ContinuousMove(self.request)
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"This is error message in move right: \n {e}" )
-
-    def move_left(self, MainWindow, ptz):
-        try:
-            self.request.Velocity.Zoom.x = 0
-            self.request.Velocity.PanTilt.x = self.XMIN
-            self.request.Velocity.PanTilt.y = 0
-            ptz.ContinuousMove(self.request)
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"This is error message in move left: \n {e}" )
+    # def move_right(self, MainWindow, ptz):
+    #     try:
+    #         self.request.Velocity.Zoom.x = 0
+    #         self.request.Velocity.PanTilt.x = self.XMAX
+    #         self.request.Velocity.PanTilt.y = 0
+    #         ptz.ContinuousMove(self.request)
+    #     except Exception as e:
+    #         ErrorHandler.displayErrorMessage(f"This is error message in move right: \n {e}" )
+    #
+    # def move_left(self, MainWindow, ptz):
+    #     try:
+    #         self.request.Velocity.Zoom.x = 0
+    #         self.request.Velocity.PanTilt.x = self.XMIN
+    #         self.request.Velocity.PanTilt.y = 0
+    #         ptz.ContinuousMove(self.request)
+    #     except Exception as e:
+    #         ErrorHandler.displayErrorMessage(f"This is error message in move left: \n {e}" )
     def zoom_up(self, ptz):
         try:
             self.request.Velocity.Zoom.x = 1

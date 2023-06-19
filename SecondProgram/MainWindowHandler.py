@@ -31,7 +31,6 @@ class MainWindowHandler:
                 retWA, frameWA = self.captureWA.read()
                 if retWA == False:
                     self.captureWA = cv2.VideoCapture(self.mainWindowWA.camera_url_wa)
-                    print("h\nh\nh\nh\nh\n")
                 if retWA:
                     frameWA_rgb = cv2.cvtColor(frameWA, cv2.COLOR_BGR2RGB)
 
@@ -148,7 +147,7 @@ class MainWindowHandler:
                     print(self.corespondingX, self.corespondingY)
                     print("this bellow is x, y")
                     print(x,y)
-                    newX, newY = self.mainWindowWA.coordinatesCalculator.calculate_corresponding_coordinate(x, y)
+                    newX, newY = self.mainWindowWA.coordinatesCalculator.getTiltAndPan(x, y)
                     print(f"Coordinates in the frame: ({newX}, {newY})")
                     self.mainWindowWA.moveToPositionSignal.emit(newX,newY)
         except Exception as e:
