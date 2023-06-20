@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import griddata
+from scipy.interpolate import Rbf
 from sklearn.metrics import mean_squared_error
 
 file_path = "Coordinates.txt"
@@ -40,15 +41,26 @@ ax.set_ylim(min(y_coords)-10, max(y_coords)+10)
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 
-ax.set_title('Vector Field')
+ax.set_title('Uzorci vektorskog polja u referentnim tačkama')
 
 plt.show()
 
 #grid_x, grid_y = np.meshgrid(np.linspace(min(x_coords), max(x_coords), 100), np.linspace(min(y_coords), max(y_coords), 100))
 grid_x, grid_y = np.meshgrid(np.linspace(0, 1920, 1920), np.linspace(0, 1080, 1080))
 
-grid_pan = griddata((x_coords, y_coords), pan_values, (grid_x, grid_y), method='linear')
-grid_tilt = griddata((x_coords, y_coords), tilt_values, (grid_x, grid_y), method='linear')
+#grid_pan = griddata((x_coords, y_coords), pan_values, (grid_x, grid_y), method='cubic')
+#grid_tilt = griddata((x_coords, y_coords), tilt_values, (grid_x, grid_y), method='cubic')
+
+#---------------------------------
+
+rbf_pan = Rbf(x_coords, y_coords, pan_values, function = 'multiquadric', epsilon = 1e-6)
+rbf_tilt = Rbf(x_coords, y_coords, tilt_values, function = 'multiquadric', epsilon = 1e-6)
+
+# Interpolate the pan and tilt values on the grid
+grid_pan = rbf_pan(grid_x, grid_y)
+grid_tilt = rbf_tilt(grid_x, grid_y)
+
+#---------------------------------
 
 fig, ax = plt.subplots()
 
@@ -60,8 +72,8 @@ grid_tilt_graph *= scale_factor
 
 #ax.quiver(grid_x, grid_y, grid_pan, grid_tilt, angles='xy', scale_units='xy', scale=1, width=0.004, headwidth=8, headlength=10)
 
-for i in range(0, grid_x.shape[0], 40):
-    for j in range(0, grid_x.shape[1], 40):
+for i in range(0, grid_x.shape[0], 20):
+    for j in range(0, grid_x.shape[1], 20):
         ax.arrow(grid_x[i, j], grid_y[i, j], grid_pan_graph[i, j], grid_tilt_graph[i, j], head_width=7, head_length=4, fc='black')
 
 ax.set_xlim(min(x_coords)-10, max(x_coords)+10)
@@ -70,7 +82,7 @@ ax.set_ylim(min(y_coords)-10, max(y_coords)+10)
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 
-ax.set_title('Interpolated Vector Field')
+ax.set_title('Interpolisano vektorsko polje')
 
 plt.show()
 
@@ -121,7 +133,7 @@ mse_tilt = mean_squared_error(known_tilt_values, interpolated_tilt_values)
 print("MSE for pan:", mse_pan)
 print("MSE for tilt:", mse_tilt)
 
-print(f"{test_pan_tilt_list[0]} {interpolated_pan_values[0]} {interpolated_tilt_values[0]}")
+#print(f"{test_pan_tilt_list[0]} {interpolated_pan_values[0]} {interpolated_tilt_values[0]}")
 
 # Initialize lists to store differences between interpolated and known pan and tilt values
 pan_differences = []
@@ -154,3 +166,8 @@ print("Minimum pan error:", min_pan_error)
 print("Maximum pan error:", max_pan_error)
 print("Minimum tilt error:", min_tilt_error)
 print("Maximum tilt error:", max_tilt_error)
+
+i = 0
+for pan_difference in pan_differences:
+    print(f"{i}: {pan_difference} {test_pan_tilt_list[i][0]} {test_xy_list[i]} : interpolated {grid_pan[test_xy_list[i][1], test_xy_list[i][0]]}")
+    i += 1
