@@ -8,6 +8,8 @@ from ErrorHandler import  ErrorHandler
 class Ptz_Handler:
     requestAbsolute = ""
     request = ""
+    def __init__(self,mainWindow):
+        self.mainWindow = mainWindow
     def get_position(self,MainWindow, ptz, media_profile):
         # Get the PTZ position using the ONVIF camera
         try:
@@ -84,93 +86,63 @@ class Ptz_Handler:
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"Error in make ptz handler function: \n {e}")
         def handle_key_press(key):
-            try:
+            if self.mainWindow.isActiveWindow():
                 try:
-                    key = key.char
-                except AttributeError:
-                    key = str(key)
+                    try:
+                        key = key.char
+                    except AttributeError:
+                        key = str(key)
 
-                if key not in PRESSED:
-                    PRESSED.add(key)
-                    # print("* pressed: " + key)
-                else:
-                    # the user is holding down the key
-                    return
-
-                t = time.time() - t0
-
-                # if key == "w" or key == "Key.up":  # w
-                #     self.move_up(MainWindow, MainWindow.ptz)
-                #     print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
-                #     if txt is None:
-                #         print("^")
-                #     else:
-                #         txt.write("%.2f\t--\t%s\n" % (t, "^"))
-                #         txt.flush()
-                # if key == "s" or key == "Key.down":  # s
-                #     self.move_down(MainWindow, MainWindow.ptz)
-                #     print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
-                #     if txt is None:
-                #         print("v")
-                #     else:
-                #         txt.write("%.2f\t--\t%s\n" % (t, "v"))
-                #         txt.flush()
-                # if key == "a" or key == "Key.left":  # a
-                #     self.move_left(MainWindow, MainWindow.ptz)
-                #     print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
-                #     if txt is None:
-                #         print("<")
-                #     else:
-                #         txt.write("%.2f\t--\t%s\n" % (t, "<"))
-                #         txt.flush()
-                # if key == "d" or key == "Key.right":  # d
-                #     self.move_right(MainWindow, MainWindow.ptz)
-                #     print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
-                #     if txt is None:
-                #         print(">")
-                #     else:
-                #         txt.write("%.2f\t--\t%s\n" % (t, ">"))
-                #         txt.flush()
-                if key == "i":  # p
-                    self.zoom_up(MainWindow.ptz)
-                    print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
-                    if txt is None:
-                        print("+")
+                    if key not in PRESSED:
+                        PRESSED.add(key)
+                        # print("* pressed: " + key)
                     else:
-                        txt.write("%.2f\t--\t%s\n" % (t, "+"))
-                        txt.flush()
-                if key == "o":  # m
-                    self.zoom_down(MainWindow.ptz)
-                    print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
-                    if txt is None:
-                        print("-")
-                    else:
-                        txt.write("%.2f\t--\t%s\n" % (t, "-"))
-                        txt.flush()
-            except Exception as e:
-                ErrorHandler.displayErrorMessage(f"Error in handle key press function: \n {e}")
+                        # the user is holding down the key
+                        return
+
+                    t = time.time() - t0
+
+                    if key == "i":  # p
+                        self.zoom_up(MainWindow.ptz)
+                        print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
+                        if txt is None:
+                            print("+")
+                        else:
+                            txt.write("%.2f\t--\t%s\n" % (t, "+"))
+                            txt.flush()
+                    if key == "o":  # m
+                        self.zoom_down(MainWindow.ptz)
+                        print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
+                        if txt is None:
+                            print("-")
+                        else:
+                            txt.write("%.2f\t--\t%s\n" % (t, "-"))
+                            txt.flush()
+                except Exception as e:
+                    ErrorHandler.displayErrorMessage(f"Error in handle key press function: \n {e}")
 
         def handle_key_release(key):
-            try:
+            if self.mainWindow.isActiveWindow():
                 try:
-                    key = key.char
-                except AttributeError:
-                    key = str(key)
+                    try:
+                        key = key.char
+                    except AttributeError:
+                        key = str(key)
 
-                t = time.time() - t0
+                    t = time.time() - t0
 
-                if key in PRESSED:
-                    PRESSED.remove(key)
-                    if len(PRESSED) == 0:
-                        self.stop_move(MainWindow.ptz)
-                        if txt is None:
-                            print("x")
-                        else:
-                            txt.write("%.2f\t--\t%s\n" % (t, "x"))
-                            txt.flush()
-                # print("* released: " + key)
-            except Exception as e:
-                ErrorHandler.displayErrorMessage(f"Error in handle key release: \n {e}")
+                    if key in PRESSED:
+                        PRESSED.remove(key)
+                        if len(PRESSED) == 0:
+                            self.stop_move(MainWindow.ptz)
+                            if txt is None:
+                                print("x")
+                            else:
+                                txt.write("%.2f\t--\t%s\n" % (t, "x"))
+                                txt.flush()
+                    # print("* released: " + key)
+                except Exception as e:
+                    ErrorHandler.displayErrorMessage(f"Error in handle key release: \n {e}")
 
         listener = keyboard.Listener(on_press=handle_key_press, on_release=handle_key_release)
         listener.start()
