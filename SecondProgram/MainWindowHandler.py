@@ -6,8 +6,6 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout,QDesktopWidget
 import cv2
-from CoordinatesCalculator import CoordinatesCalculator
-
 class MainWindowHandler:
     def __init__(self):
         self.mainWindowWA = MainWindowWA()
@@ -51,9 +49,6 @@ class MainWindowHandler:
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"This is error in updating WA frames: \n {e}")
         try:
-            if self.mainWindowWA.selectedFile != "" and self.mainWindowWA.fileIsSelected == True:
-                self.mainWindowWA.fileIsSelected = False
-                self.mainWindowWA.coordinatesCalculator = CoordinatesCalculator(self.mainWindowWA.selectedFile)
             if self.readPTZ and self.capturePTZ is not None and self.capturePTZ.isOpened():
                 retPTZ, framePTZ = self.capturePTZ.read()
                 if retPTZ == False:
@@ -130,34 +125,30 @@ class MainWindowHandler:
             ErrorHandler.displayErrorMessage(f"This is error in login handler for WA \n{e}")
     def video_label_mousePressEvent(self, event):
         try:
-            if self.mainWindowWA.coordinatesCalculator != None:
-                if self.captureWA is not None and self.captureWA.isOpened():
+            if self.captureWA is not None and self.captureWA.isOpened():
 
-                    # Get the mouse position relative to the label
-                    pos = event.pos()
-                    width_ratio = pos.x() / self.mainWindowWA.width()
-                    height_ratio = pos.y() / self.mainWindowWA.height()
-                    print("hah")
-                    # Get the frame dimensions
-                    retWA, frameWA = self.captureWA.read()
-                    if retWA:
-                        frame_height, frame_width, _ = frameWA.shape
+                # Get the mouse position relative to the label
+                pos = event.pos()
+                width_ratio = pos.x() / self.mainWindowWA.width()
+                height_ratio = pos.y() / self.mainWindowWA.height()
+                print("hah")
+                # Get the frame dimensions
+                retWA, frameWA = self.captureWA.read()
+                if retWA:
+                    frame_height, frame_width, _ = frameWA.shape
 
-                        # Calculate the coordinates in the frame
-                        x = int(width_ratio * frame_width)
-                        y = int(height_ratio * frame_height)
+                    # Calculate the coordinates in the frame
+                    x = int(width_ratio * frame_width)
+                    y = int(height_ratio * frame_height)
 
-                        # Calculate the coordinates in the frame
-                        self.corespondingX = x
-                        self.corespondingY = y
-                        print(self.corespondingX, self.corespondingY)
-                        print("this bellow is x, y")
-                        print(x,y)
-                        newX, newY = self.mainWindowWA.coordinatesCalculator.getTiltAndPan(x, y)
-                        print(f"Coordinates in the frame: ({newX}, {newY})")
-                        self.mainWindowWA.moveToPositionSignal.emit(newX,newY)
-            else:
-                ErrorHandler.displayErrorMessage("Select Calibration file")
-
+                    # Calculate the coordinates in the frame
+                    self.corespondingX = x
+                    self.corespondingY = y
+                    print(self.corespondingX, self.corespondingY)
+                    print("this bellow is x, y")
+                    print(x,y)
+                    newX, newY = self.mainWindowWA.coordinatesCalculator.getTiltAndPan(x, y)
+                    print(f"Coordinates in the frame: ({newX}, {newY})")
+                    self.mainWindowWA.moveToPositionSignal.emit(newX,newY)
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"This is error in mouse press event for WA camera: \n {e}")
