@@ -60,9 +60,8 @@ class MainWindowWA(QWidget):
                 cameraResolution = f.readline().strip().split(', ')
 
             width, height = map(float, cameraResolution)
-            screenWidthWA, screenHeightWA = self.calculateWindowDimensions(width,height)
-            self.video_label.setMinimumSize(screenWidthWA,screenHeightWA)
-            self.video_label.setMaximumSize(screenWidthWA,screenHeightWA+30)
+            self.video_label.setMinimumSize(self.width() ,self.height())
+            self.video_label.setMaximumSize(self.width() ,self.height() + 30)
             self.setMaximumWidth(QDesktopWidget().screenGeometry().width())
             self.setGeometry(0,0,screenWidthWA, screenHeightWA)
             self.camera_url_wa = f"rtsp://{usernameWA}:{passwordWA}@{ip_addressWA}/Streaming/Channels/1"

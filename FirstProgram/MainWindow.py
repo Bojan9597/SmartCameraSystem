@@ -40,12 +40,14 @@ class MainWindow(QWidget):
         # Create PTZ coordinates labels
         wa_coordinates_label = QLabel("WA Coordinates")
         wa_coordinates_label.setFont(QFont("Arial", 16, QFont.Bold))
-        wa_coordinates_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)  # Set the size policy
+        wa_coordinates_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)  # Set the size policy
+        wa_coordinates_label.setMinimumHeight(30)
 
         # Create WA coordinates labels
         ptz_coordinates_label = QLabel("PTZ Coordinates")
         ptz_coordinates_label.setFont(QFont("Arial", 16, QFont.Bold))
-        ptz_coordinates_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)  # Set the size policy
+        ptz_coordinates_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)  # Set the size policy
+        ptz_coordinates_label.setMinimumHeight(30)
 
         # Create label and button for selecting corresponding coordinate
         select_label = QLabel("Select corresponding coordinate:")
@@ -55,7 +57,8 @@ class MainWindow(QWidget):
         # Create button for registering pan and tilt
         register_button = QPushButton("Register Pan and Tilt")
         register_button.setFont(QFont("Arial", 12, QFont.Bold))
-        register_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        register_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        register_button.setMinimumHeight(30)
 
         # Add labels, button, and select label to the grid layout
         grid.addWidget(wa_coordinates_label, 0, 0, 1, 2, Qt.AlignCenter)
@@ -72,6 +75,8 @@ class MainWindow(QWidget):
         self.right_label.setAlignment(Qt.AlignCenter)
         self.left_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.right_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.left_label.setMaximumSize(self.width() // 2 - 30, self.height() - 30)
+        self.right_label.setMaximumSize(self.width() // 2 - 30, self.height() - 30)
         # Set the background images for the labels
         wa_background = QPixmap(
             "C:/Users/bojan/Desktop/Once_DE_Project/Once_DE_Project/FirstProgram/images/wideAngleCamera.png")
@@ -321,6 +326,28 @@ class MainWindow(QWidget):
                 ErrorHandler.displayMessage(f"Coordinates emptied")
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"Error in handling key press events: \n {e}")
+
+    def calculateWindowDimensions(self, width, height):
+        try:
+            aspect_ratioPTZ = width / height
+            current_screen = QDesktopWidget().screenGeometry(self)
+            screenWidthPTZ = current_screen.width()
+            screenHeightPTZ = current_screen.height()
+
+            aspect_ratio = screenWidthPTZ / screenHeightPTZ
+            if aspect_ratioPTZ > aspect_ratio:
+                widthPTZ = screenWidthPTZ
+                heightPTZ = widthPTZ / aspect_ratioPTZ
+            else:
+                heightPTZ = screenHeightPTZ
+                widthPTZ = heightPTZ * aspect_ratioPTZ
+
+            return widthPTZ * 0.9, heightPTZ * 0.9
+        except Exception as e:
+            ErrorHandler.displayErrorMessage(f"Error in calculating Window dimensions for PTZ camera: \n {e}")
+
+
+
 
 
 

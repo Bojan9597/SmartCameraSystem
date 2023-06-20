@@ -67,9 +67,8 @@ class MainWindowPTZ(QWidget):
                 cameraResolution = f.readline().strip().split(', ')
 
             width, height = map(float, cameraResolution)
-            screenWidthPTZ, screenHeightPTZ = self.calculateWindowDimensions(width,height)
-            self.video_label.setMinimumSize(screenWidthPTZ,screenHeightPTZ)
-            self.video_label.setMaximumSize(screenWidthPTZ,screenHeightPTZ+30)
+            self.video_label.setMinimumSize(self.width(), self.height())
+            self.video_label.setMaximumSize(self.width(), self.height() + 30)
             self.setMaximumWidth(QDesktopWidget().screenGeometry().width())
             self.setGeometry(0,200,screenWidthPTZ, screenHeightPTZ)
             self.camera_url_ptz = f"rtsp://{usernamePTZ}:{passwordPTZ}@{ip_addressPTZ}/Streaming/Channels/1"
@@ -104,24 +103,6 @@ class MainWindowPTZ(QWidget):
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"This is error in adding red cross: \n {e}")
 
-    def calculateWindowDimensions(self, width, height):
-        try:
-            aspect_ratioPTZ = width / height
-            current_screen = QDesktopWidget().screenGeometry(self)
-            screenWidthPTZ = current_screen.width()
-            screenHeightPTZ = current_screen.height()
-
-            aspect_ratio = screenWidthPTZ / screenHeightPTZ
-            if aspect_ratioPTZ > aspect_ratio:
-                widthPTZ = screenWidthPTZ
-                heightPTZ = widthPTZ / aspect_ratioPTZ
-            else:
-                heightPTZ = screenHeightPTZ
-                widthPTZ = heightPTZ * aspect_ratioPTZ
-
-            return widthPTZ * 0.9, heightPTZ * 0.9
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"Error in calculating Window dimensions for PTZ camera: \n {e}")
 
 
 
