@@ -1,15 +1,17 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QMessageBox, QGridLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QMessageBox, QGridLayout, QFileDialog
 from PyQt5.QtCore import pyqtSignal
 from ErrorHandler import ErrorHandler
 import os
+
 class LoginWindow(QWidget):
-    loginSuccessful = pyqtSignal(str, str, str, str)
+    loginSuccessful = pyqtSignal(str, str, str, str, str)
 
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Login")
         self.setGeometry(200, 200, 400, 200)
 
+        self.selectedFile = ""
         # Create a grid layout
         grid = QGridLayout()
         self.setLayout(grid)
@@ -53,7 +55,11 @@ class LoginWindow(QWidget):
         # Create the login button for the second column
         login_button2 = QPushButton("Log In")
         login_button2.clicked.connect(lambda: self.login_clicked("2"))
-                                                                      
+
+        # Create the file chooser button
+        self.file_button = QPushButton("Choose File")
+        self.file_button.clicked.connect(self.choose_file)
+
         # Add widgets to the grid layout for the first column
         grid.addWidget(username_label1, 0, 0)
         grid.addWidget(username_textbox1, 0, 1)
@@ -72,11 +78,27 @@ class LoginWindow(QWidget):
         grid.addWidget(ip_textbox2, 2, 3)
         grid.addWidget(login_button2, 3, 2, 1, 2)
 
+        # Add the file chooser button below the grid layout
+        grid.addWidget(self.file_button, 4, 0, 1, 4)
+
         # Call the function to set default values for the left column
         self.set_default_values(username_textbox1, password_textbox1, ip_textbox1, "../SecondProgram/ConfigurationWA.txt")
 
         # Call the function to set default values for the right column
         self.set_default_values(username_textbox2, password_textbox2, ip_textbox2, "../SecondProgram/ConfigurationPTZ.txt")
+
+    def choose_file(self):
+        file_dialog = QFileDialog()
+        file_dialog.exec_()
+        selected_file = file_dialog.selectedFiles()
+        if selected_file:
+            print("Selected file:", selected_file[0])
+        self.selectedFile = os.path.abspath(selected_file[0])
+        self.file_button.setText(f"File is choosen: {self.selectedFile}")
+
+    def login_clicked(self, column):
+        # Handle login button click
+        print("Login clicked for column:", column)
 
     def login_clicked(self, source):
         try:
@@ -86,7 +108,7 @@ class LoginWindow(QWidget):
             ip_address = self.findChild(QLineEdit, f"ip_address{source}").text()
 
             # Perform the login authentication (replace with your own logic)
-            self.loginSuccessful.emit(source, username, password, ip_address)
+            self.loginSuccessful.emit(source, username, password, ip_address, self.selectedFile)
 
             # Clear the username and password fields
             self.findChild(QLineEdit, f"username{source}").clear()

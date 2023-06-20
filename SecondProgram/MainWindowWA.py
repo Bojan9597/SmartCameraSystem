@@ -1,5 +1,7 @@
+import os.path
+
 import cv2
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QGridLayout,QDesktopWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QGridLayout,QDesktopWidget, QFileDialog, QPushButton
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import Qt, QTimer
 from CoordinatesCalculator import CoordinatesCalculator
@@ -10,12 +12,14 @@ class MainWindowWA(QWidget):
     camera_url_wa = ""
     saveprefix = ""
     media_profile = ""
-    coordinatesCalculator = CoordinatesCalculator('Coordinates.txt')
     request = ""
     moveToPositionSignal = pyqtSignal(float, float)
 
     def __init__(self):
         super().__init__()
+        self.coordinatesCalculator = None
+        self.selectedFile = ""
+        self.fileIsSelected = False
         self.setWindowTitle("Main Window WA")
         screen = QDesktopWidget().screenGeometry()
         self.screenWidth = screen.width()
@@ -25,6 +29,10 @@ class MainWindowWA(QWidget):
         self.camera_label = QLabel("WA Camera")
         self.camera_label.setAlignment(Qt.AlignCenter)
         self.camera_label.setMaximumHeight(30)
+
+        # Create the "Choose File" button
+        self.file_button = QPushButton("Choose File")
+        self.file_button.clicked.connect(self.choose_file)
 
         # Create a label for displaying the video frame
         self.video_label = QLabel()
@@ -38,9 +46,10 @@ class MainWindowWA(QWidget):
         grid = QGridLayout()
         self.setLayout(grid)
 
-        # Add labels to the grid layout
+        # Add labels and button to the grid layout
         grid.addWidget(self.camera_label, 0, 0)
-        grid.addWidget(self.video_label, 1, 0)
+        grid.addWidget(self.file_button, 1, 0)
+        grid.addWidget(self.video_label, 2, 0)
 
         # Start capturing video frames
         self.captureWA = None
@@ -48,6 +57,16 @@ class MainWindowWA(QWidget):
 
         # Enable mouse tracking on the label
         self.video_label.setMouseTracking(True)
+
+    def choose_file(self):
+        file_dialog = QFileDialog()
+        file_dialog.exec_()
+        selected_file = file_dialog.selectedFiles()
+        if selected_file:
+            print("Selected file:", selected_file[0])
+        self.selectedFile = os.path.abspath(selected_file[0])
+        self.fileIsSelected = True
+        self.file_button.setText(f"File is chosen: {self.selectedFile}")
 
         # self.handleLogin()
 
@@ -60,8 +79,9 @@ class MainWindowWA(QWidget):
                 cameraResolution = f.readline().strip().split(', ')
 
             width, height = map(float, cameraResolution)
-            self.video_label.setMinimumSize(self.width() ,self.height())
-            self.video_label.setMaximumSize(self.width() ,self.height() + 30)
+            screenWidthWA, screenHeightWA = self.calculateWindowDimensions(width,height)
+            self.video_label.setMinimumSize(screenWidthWA,screenHeightWA)
+            self.video_label.setMaximumSize(screenWidthWA,screenHeightWA+30)
             self.setMaximumWidth(QDesktopWidget().screenGeometry().width())
             self.setGeometry(0,0,screenWidthWA, screenHeightWA)
             self.camera_url_wa = f"rtsp://{usernameWA}:{passwordWA}@{ip_addressWA}/Streaming/Channels/1"
