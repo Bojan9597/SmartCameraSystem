@@ -202,119 +202,119 @@ class CoordinatesCalculator:
     def getTiltAndPan(self, x, y):
         return self.pani[int(y / 10)][int(x / 10)], self.tilti[int(y / 10)][int(x / 10)]
 
-    def errorCalculation(self):
-        self.coordinatesWA = self.read_coordinatesWA("Coordinates.txt")
-        self.coordinatesPTZ = self.read_coordinatesPTZ("Coordinates.txt")
-        test_values_wa = self.read_coordinatesWA("testCoordinates.txt")
-        test_values_ptz = self.read_coordinatesPTZ("testCoordinates.txt")
-        methodRbf = ['multiquadric', 'inverse', 'gaussian', 'linear', 'cubic', 'quintic', 'thin_plate']
-        best_error = (float('inf'))
-        best_method_type = ""
-        methodGrid = ['nearest', 'linear', 'cubic']
-        epsilon = [0.1, 0.5, 1, 2, 5, 10]
-        smoothness = [0.1, 0.5, 1, 2, 5, 10]
-        rescale = [True, False]
-        file = open("error.txt", "w")
-        for i in range(3, 0, -1):
+    # def errorCalculation(self):
+    #     self.coordinatesWA = self.read_coordinatesWA("../CoordinatesForCalibration.txt")
+    #     self.coordinatesPTZ = self.read_coordinatesPTZ("../CoordinatesForCalibration.txt")
+    #     test_values_wa = self.read_coordinatesWA("testCoordinates.txt")
+    #     test_values_ptz = self.read_coordinatesPTZ("testCoordinates.txt")
+    #     methodRbf = ['multiquadric', 'inverse', 'gaussian', 'linear', 'cubic', 'quintic', 'thin_plate']
+    #     best_error = (float('inf'))
+    #     best_method_type = ""
+    #     methodGrid = ['nearest', 'linear', 'cubic']
+    #     epsilon = [0.1, 0.5, 1, 2, 5, 10]
+    #     smoothness = [0.1, 0.5, 1, 2, 5, 10]
+    #     rescale = [True, False]
+    #     file = open("error.txt", "w")
+    #     for i in range(3, 0, -1):
 
-            coordinatesWA = self.coordinatesWA[::i]
-            coordinatesPTZ = self.coordinatesPTZ[::i]
-            with open("error.txt", "a") as file:
-                file.write(f"Number of points: {len(coordinatesWA)}\n\n")
-            with open("error.txt", "a") as file:
-                file.write("RBF Interpolation:\n")
-            for method in methodRbf:
-                for e in epsilon:
-                    for s in smoothness:
-                        try:
-                            self.calculateCorrespondingCoordinateRbf(coordinatesWA, coordinatesPTZ, method, e, s)
-                            error = 0
-                            for i in range(len(test_values_wa)):
-                                pan, tilt = self.getTiltAndPan(test_values_wa[i][0], test_values_wa[i][1])
-                                error += abs(pan - test_values_ptz[i][0]) + abs(tilt - test_values_ptz[i][1])
-                            error /= len(test_values_wa)
-                            with open("error.txt", "a") as file:
-                                file.write(
-                                    f"RBF Interpolation: Method: {method} Epsilon: {e} Smoothness: {s} Error: {error}\n")
-                            if error < best_error:
-                                best_method_type = "RBF"
-                                best_error = error
-                                best_method = method
-                                best_epsilon = e
-                                best_smoothness = s
-                        except:
-                            continue
-            with open("error.txt", "a") as file:
-                file.write("\n Grid Interpolation\n")
-            for method in methodGrid:
-                for r in rescale:
-                    try:
-                        self.calculateCorrespondingCoordinateGrid(coordinatesWA, coordinatesPTZ, method, r)
-                        error = 0
-                        for i in range(len(test_values_wa)):
-                            pan, tilt = self.getTiltAndPan(test_values_wa[i][0], test_values_wa[i][1])
-                            error += abs(pan - test_values_ptz[i][0]) + abs(tilt - test_values_ptz[i][1])
-                        error /= len(test_values_wa)
-                        with open("error.txt", "a") as file:
-                            file.write(f"Grid Interpolation: Method: {method} Rescale: {r} Error: {error}\n")
-                        if error < best_error:
-                            best_method_type = "Grid"
-                            best_error = error
-                            best_method = method
-                            best_rescale = r
-                    except:
-                        continue
-            with open("error.txt", "a") as file:
-                file.write("\nLinearND Interpolation\n")
-            for rescaled in rescale:
-                try:
-                    self.calculateCorrespondingCoordinateLinearND(coordinatesWA, coordinatesPTZ, rescale=rescaled)
-                    error = 0
-                    for i in range(len(test_values_wa)):
-                        pan, tilt = self.getTiltAndPan(test_values_wa[i][0], test_values_wa[i][1])
-                        error += abs(pan - test_values_ptz[i][0]) + abs(tilt - test_values_ptz[i][1])
-                    error = error / len(test_values_wa)
-                    with open("error.txt", "a") as file:
-                        file.write(f"LinearND Interpolation: Method: {rescaled} Error: {error}\n")
-                    if error < best_error:
-                        best_method_type = "LinearND"
-                        best_error = error
-                        best_rescale = rescaled
-                except Exception as e:
-                    print(e)
-                    continue
-            with open("error.txt", "a") as file:
-                file.write(f"\nKriging Interpolation: \n")
-            self.calculateCorrespondingCoordinateKriging(coordinatesWA, coordinatesPTZ)
-            error = 0
-            try:
-                for i in range(len(test_values_wa)):
-                    pan, tilt = self.getTiltAndPan(test_values_wa[i][0], test_values_wa[i][1])
-                    error += abs(pan - test_values_ptz[i][0]) + abs(tilt - test_values_ptz[i][1])
-                error /= len(test_values_wa)
-                with open("error.txt", "a") as file:
-                    file.write(f"Kriging Interpolation: Error: {error}\n")
-                if error < best_error:
-                    best_error = error
-                    best_method_type = "Kriging"
-            except:
-                continue
+    #         coordinatesWA = self.coordinatesWA[::i]
+    #         coordinatesPTZ = self.coordinatesPTZ[::i]
+    #         with open("error.txt", "a") as file:
+    #             file.write(f"Number of points: {len(coordinatesWA)}\n\n")
+    #         with open("error.txt", "a") as file:
+    #             file.write("RBF Interpolation:\n")
+    #         for method in methodRbf:
+    #             for e in epsilon:
+    #                 for s in smoothness:
+    #                     try:
+    #                         self.calculateCorrespondingCoordinateRbf(coordinatesWA, coordinatesPTZ, method, e, s)
+    #                         error = 0
+    #                         for i in range(len(test_values_wa)):
+    #                             pan, tilt = self.getTiltAndPan(test_values_wa[i][0], test_values_wa[i][1])
+    #                             error += abs(pan - test_values_ptz[i][0]) + abs(tilt - test_values_ptz[i][1])
+    #                         error /= len(test_values_wa)
+    #                         with open("error.txt", "a") as file:
+    #                             file.write(
+    #                                 f"RBF Interpolation: Method: {method} Epsilon: {e} Smoothness: {s} Error: {error}\n")
+    #                         if error < best_error:
+    #                             best_method_type = "RBF"
+    #                             best_error = error
+    #                             best_method = method
+    #                             best_epsilon = e
+    #                             best_smoothness = s
+    #                     except:
+    #                         continue
+    #         with open("error.txt", "a") as file:
+    #             file.write("\n Grid Interpolation\n")
+    #         for method in methodGrid:
+    #             for r in rescale:
+    #                 try:
+    #                     self.calculateCorrespondingCoordinateGrid(coordinatesWA, coordinatesPTZ, method, r)
+    #                     error = 0
+    #                     for i in range(len(test_values_wa)):
+    #                         pan, tilt = self.getTiltAndPan(test_values_wa[i][0], test_values_wa[i][1])
+    #                         error += abs(pan - test_values_ptz[i][0]) + abs(tilt - test_values_ptz[i][1])
+    #                     error /= len(test_values_wa)
+    #                     with open("error.txt", "a") as file:
+    #                         file.write(f"Grid Interpolation: Method: {method} Rescale: {r} Error: {error}\n")
+    #                     if error < best_error:
+    #                         best_method_type = "Grid"
+    #                         best_error = error
+    #                         best_method = method
+    #                         best_rescale = r
+    #                 except:
+    #                     continue
+    #         with open("error.txt", "a") as file:
+    #             file.write("\nLinearND Interpolation\n")
+    #         for rescaled in rescale:
+    #             try:
+    #                 self.calculateCorrespondingCoordinateLinearND(coordinatesWA, coordinatesPTZ, rescale=rescaled)
+    #                 error = 0
+    #                 for i in range(len(test_values_wa)):
+    #                     pan, tilt = self.getTiltAndPan(test_values_wa[i][0], test_values_wa[i][1])
+    #                     error += abs(pan - test_values_ptz[i][0]) + abs(tilt - test_values_ptz[i][1])
+    #                 error = error / len(test_values_wa)
+    #                 with open("error.txt", "a") as file:
+    #                     file.write(f"LinearND Interpolation: Method: {rescaled} Error: {error}\n")
+    #                 if error < best_error:
+    #                     best_method_type = "LinearND"
+    #                     best_error = error
+    #                     best_rescale = rescaled
+    #             except Exception as e:
+    #                 print(e)
+    #                 continue
+    #         with open("error.txt", "a") as file:
+    #             file.write(f"\nKriging Interpolation: \n")
+    #         self.calculateCorrespondingCoordinateKriging(coordinatesWA, coordinatesPTZ)
+    #         error = 0
+    #         try:
+    #             for i in range(len(test_values_wa)):
+    #                 pan, tilt = self.getTiltAndPan(test_values_wa[i][0], test_values_wa[i][1])
+    #                 error += abs(pan - test_values_ptz[i][0]) + abs(tilt - test_values_ptz[i][1])
+    #             error /= len(test_values_wa)
+    #             with open("error.txt", "a") as file:
+    #                 file.write(f"Kriging Interpolation: Error: {error}\n")
+    #             if error < best_error:
+    #                 best_error = error
+    #                 best_method_type = "Kriging"
+    #         except:
+    #             continue
 
-        with open("bestError.txt", "a") as file:
-            if best_method_type == "RBF":
-                pass
-                file.write(
-                    f"RBF Interpolation: Method: {best_method} Epsilon: {best_epsilon} Smoothness: {best_smoothness} Error: {best_error}\n")
-            elif best_method_type == "Grid":
-                pass
-                file.write(f"Grid Interpolation: Method: {best_method} Rescale: {best_rescale} Error: {best_error}\n")
-            elif best_method_type == "LinearND":
-                file.write(f"LinearND Interpolation: Method: {best_rescale} Error: {best_error}\n")
-            elif best_method_type == "Kriging":
-                file.write(f"Kriging Interpolation: Error: {best_error}\n")
+    #     with open("bestError.txt", "a") as file:
+    #         if best_method_type == "RBF":
+    #             pass
+    #             file.write(
+    #                 f"RBF Interpolation: Method: {best_method} Epsilon: {best_epsilon} Smoothness: {best_smoothness} Error: {best_error}\n")
+    #         elif best_method_type == "Grid":
+    #             pass
+    #             file.write(f"Grid Interpolation: Method: {best_method} Rescale: {best_rescale} Error: {best_error}\n")
+    #         elif best_method_type == "LinearND":
+    #             file.write(f"LinearND Interpolation: Method: {best_rescale} Error: {best_error}\n")
+    #         elif best_method_type == "Kriging":
+    #             file.write(f"Kriging Interpolation: Error: {best_error}\n")
 
 
 # Usage example:
-calculator = CoordinatesCalculator('Coordinates.txt')
+calculator = CoordinatesCalculator("../CoordinatesForCalibration.txt")
 
 # calculator.errorCalculation()

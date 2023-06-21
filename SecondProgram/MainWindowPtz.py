@@ -13,7 +13,6 @@ class MainWindowPTZ(QWidget):
     camera_url_ptz = ""
     saveprefix = ""
     media_profile = ""
-    coordinatesCalculator = CoordinatesCalculator('Coordinates.txt')
     request = ""
     counter =0
     def __init__(self):
