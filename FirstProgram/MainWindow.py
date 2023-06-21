@@ -18,9 +18,11 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.ptz_handler = Ptz_Handler()
-        self.selectedFile = ""
-        self.setWindowTitle("Main Window")
-
+        self.isNewCalibration = True
+        self.selectedFile = "CalibrationCoordinates.txt"
+        self.setWindowTitle("Calibration Program")
+        self.frameWidthPTZ, self.frameHeightPTZ = 0,0
+        self.frameWidthWA, self.frameHeightWA = 0,0
         screen = QDesktopWidget().screenGeometry()
         initial_width = screen.width()
         initial_height = 650
@@ -39,15 +41,17 @@ class MainWindow(QWidget):
         grid.setColumnStretch(3, 1)
         self.setLayout(grid)
 
-        # Create PTZ coordinates labels
+        # Create WA coordinates labels
         wa_coordinates_label = QLabel("WA Coordinates")
         wa_coordinates_label.setFont(QFont("Arial", 16, QFont.Bold))
-        wa_coordinates_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)  # Set the size policy
+        wa_coordinates_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)  # Set the size policy
+        wa_coordinates_label.setMinimumHeight(30)
 
-        # Create WA coordinates labels
+        # Create PTZ coordinates labels
         ptz_coordinates_label = QLabel("PTZ Coordinates")
         ptz_coordinates_label.setFont(QFont("Arial", 16, QFont.Bold))
-        ptz_coordinates_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)  # Set the size policy
+        ptz_coordinates_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)  # Set the size policy
+        ptz_coordinates_label.setMinimumHeight(30)
 
         # Create label and button for selecting corresponding coordinate
         select_label = QLabel("Select corresponding coordinate:")
@@ -76,9 +80,9 @@ class MainWindow(QWidget):
         self.right_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # Set the background images for the labels
         wa_background = QPixmap(
-            "C:/Users/bojan/Desktop/Once_DE_Project/Once_DE_Project/FirstProgram/images/wideAngleCamera.png")
+            "images/wideAngleCamera.png")
         ptz_background = QPixmap(
-            "C:/Users/bojan/Desktop/Once_DE_Project/Once_DE_Project/FirstProgram/images/ptzCamera.png")
+            "images/ptzCamera.png")
         self.left_label.setPixmap(wa_background.scaled(self.width() // 2, self.height() - 100, Qt.KeepAspectRatio))
         self.right_label.setPixmap(ptz_background.scaled(self.width() // 2, self.height() - 100, Qt.KeepAspectRatio))
 
@@ -100,14 +104,27 @@ class MainWindow(QWidget):
         register_button.mousePressEvent = self.register_button_mousePressEvent
 
     ###############################   Functions  ################################################################
-    @pyqtSlot(str)
-    def handleFileSelected(self, selectedFile):
+    @pyqtSlot(str, bool)
+    def handleFileSelected(self, selectedFile, isNewCalibration):
         self.selectedFile = selectedFile
+        self.isNewCalibration = isNewCalibration
+        if self.isNewCalibration:
+            pass
+        elif self.coordinates == []:
+            self.coordinates.extend(self.readCoordinatesFromFile(self.selectedFile))
 
-    @pyqtSlot(str, str, str, str, str)
-    def handleLogin(self, source, username, password, ip_address, selectedFile):
+    @pyqtSlot(str, str, str, str, str, bool)
+    def handleLogin(self, source, username, password, ip_address, selectedFile, isNewCalibraion):
+
         try:
             try:
+                self.isNewCalibration = isNewCalibraion
+                if self.isNewCalibration:
+                    pass
+                elif self.coordinates == []:
+                    self.coordinates.extend(self.readCoordinatesFromFile(self.selectedFile))
+
+                # Write the coordinates to the file
                 camera_url = f"rtsp://{username}:{password}@{ip_address}/Streaming/Channels/1"
                 capture = cv2.VideoCapture()
 
@@ -130,27 +147,36 @@ class MainWindow(QWidget):
                     self.camera_url_wa = camera_url
                     self.captureWA = capture
                     self.readWA = True
+                    self.frameWidthWA, self.frameHeightWA = self.captureWA.get(cv2.CAP_PROP_FRAME_WIDTH), self.captureWA.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                    self.calculateWindowCoordinates(source, self.frameWidthWA,self.frameHeightWA)
                     print(
                         f"Login successful for source 1. Username: {username}, Password: {password}, IP Address: {ip_address}")
-                    with open("../SecondProgram/ConfigurationWA.txt", "w") as f:
-                        f.write(f"{username}\n")
-                        f.write(f"{password}\n")
-                        f.write(f"{ip_address}\n")
-                        f.write(
-                            f"{self.captureWA.get(cv2.CAP_PROP_FRAME_WIDTH)} , {self.captureWA.get(cv2.CAP_PROP_FRAME_HEIGHT)} \n")
+                    try:
+                        with open("ConfigurationWA.txt", "w") as f:
+                            f.write(f"{username}\n")
+                            f.write(f"{password}\n")
+                            f.write(f"{ip_address}\n")
+                            f.write(
+                                f"{self.captureWA.get(cv2.CAP_PROP_FRAME_WIDTH)} , {self.captureWA.get(cv2.CAP_PROP_FRAME_HEIGHT)} \n")
+                    except Exception as e:
+                        ErrorHandler.displayErrorMessage("Can not open file ConfigurationWA.txt")
                 elif source == "2":
                     self.camera_url_ptz = camera_url
                     self.capturePTZ = capture
                     self.readPTZ = True
+                    self.frameWidthPTZ, self.frameHeightPTZ = self.capturePTZ.get(cv2.CAP_PROP_FRAME_WIDTH), self.capturePTZ.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                    self.calculateWindowCoordinates(source, self.frameWidthPTZ, self.frameHeightPTZ)
                     print(
                         f"Login successful for source 2. Username: {username}, Password: {password}, IP Address: {ip_address}")
-                    with open("../SecondProgram/ConfigurationPTZ.txt", "w") as f:
-                        f.write(f"{username}\n")
-                        f.write(f"{password}\n")
-                        f.write(f"{ip_address}\n")
-                        f.write(
-                            f"{self.capturePTZ.get(cv2.CAP_PROP_FRAME_WIDTH)} , {self.capturePTZ.get(cv2.CAP_PROP_FRAME_HEIGHT)} \n")
-
+                    try:
+                        with open("ConfigurationPTZ.txt", "w") as f:
+                            f.write(f"{username}\n")
+                            f.write(f"{password}\n")
+                            f.write(f"{ip_address}\n")
+                            f.write(
+                                f"{self.capturePTZ.get(cv2.CAP_PROP_FRAME_WIDTH)} , {self.capturePTZ.get(cv2.CAP_PROP_FRAME_HEIGHT)} \n")
+                    except Exception as e:
+                        ErrorHandler.displayErrorMessage("Can not open file ConfigurationPTZ.txt")
                 # Continue with streaming video
                 print("Login successful! Streaming video...")
             except Exception as e:
@@ -253,6 +279,9 @@ class MainWindow(QWidget):
         try:
             if not self.isWAChoosed:
                 self.isWAChoosed = True
+                if self.isWAChoosed:
+                    self.left_label.setStyleSheet('border: none;')
+                    self.right_label.setStyleSheet('border: 3px solid blue; padding: 1px;')
                 if self.captureWA is not None and self.captureWA.isOpened():
                     # Get the mouse position relative to the label
                     pos = event.pos()
@@ -278,6 +307,9 @@ class MainWindow(QWidget):
             print(self.selectedFile)
             if self.isWAChoosed:
                 self.isWAChoosed = False
+                if not self.isWAChoosed:
+                    self.left_label.setStyleSheet('border: 3px solid blue; padding: 1px;')
+                    self.right_label.setStyleSheet('border: none;')
                 if self.capturePTZ is not None and self.capturePTZ.isOpened():
                     # Get the mouse position relative to the label
                     pos = event.pos()
@@ -296,13 +328,15 @@ class MainWindow(QWidget):
                         x,y,zoom = self.ptz_handler.get_position(self,self.ptz,self.media_profile)
                         self.coordinates.extend((x, y, zoom))
 
-                        # Write the coordinates to the file
                         if len(self.coordinates)/5 >= 4:
-                            with open(self.selectedFile, "w") as file:
-                                for i in range(int(len(self.coordinates) / 5)):
-                                    file.write(
-                                        f"X: {self.coordinates[i * 5 + 0]}, Y: {self.coordinates[i * 5 + 1]}, pan: {self.coordinates[i * 5 + 2]}, "
-                                        f"tilt: {self.coordinates[i * 5 + 3]}, zoom: {self.coordinates[i * 5 + 4]}\n")
+                            try:
+                                with open(self.selectedFile, "w") as file:
+                                    for i in range(int(len(self.coordinates) / 5)):
+                                        file.write(
+                                            f"X: {self.coordinates[i * 5 + 0]}, Y: {self.coordinates[i * 5 + 1]}, pan: {self.coordinates[i * 5 + 2]}, "
+                                            f"tilt: {self.coordinates[i * 5 + 3]}, zoom: {self.coordinates[i * 5 + 4]}\n")
+                            except Exception as e:
+                                ErrorHandler.displayErrorMessage("Can not open file file for calibrating coordinates")
                         print(self.coordinates)
 
         except Exception as e:
@@ -329,7 +363,35 @@ class MainWindow(QWidget):
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"Error in handling key press events: \n {e}")
 
+    def readCoordinatesFromFile(self, selectedFile):
+        try:
+            with open(selectedFile, 'r') as file:
+                lines = file.readlines()
+            coordinates = []
+            # Process each line and extract the values
+            for line in lines:
+                line = line.strip()
+                if line.startswith("X:"):
+                    parts = line.split(", ")
+                    x = int(parts[0].split(":")[1].strip())
+                    y = int(parts[1].split(":")[1].strip())
+                    pan = float(parts[2].split(":")[1].strip())
+                    tilt = float(parts[3].split(":")[1].strip())
+                    zoom = float(parts[4].split(":")[1].strip())
 
+                    # Add the values to the coordinates array
+                    coordinates.extend((x, y, pan, tilt, zoom))
+            return coordinates
+        except Exception as e:
+            return []
+            ErrorHandler.displayErrorMessage("File does not exist, calibration must be done from beggining")
 
-
-
+    def calculateWindowCoordinates(self, source, width, height):
+        if source =="1":
+            aspectRatioPTZ = height/width
+            self.left_label.setMaximumSize(self.width() // 2 - 30, int((self.width() // 2 - 30) * aspectRatioPTZ))
+            self.left_label.setStyleSheet('border: 3px solid blue; padding: 1px;')
+        if source == "2":
+            aspectRatioWA = height/ width
+            self.right_label.setMaximumSize(self.width() // 2 - 30, int(((self.width() // 2 - 30)*aspectRatioWA)))
+            self.left_label.setStyleSheet('border: 3px solid blue; padding: 1px;')
