@@ -41,7 +41,7 @@ class MainWindowWA(QWidget):
         self.video_label.setAlignment(Qt.AlignCenter)
         # Set the background image for the video label
         wa_background = QPixmap(
-            "C:/Users/bojan/Desktop/Once_DE_Project/Once_DE_Project/FirstProgram/images/wideAngleCamera.png")
+            "images/wideAngleCamera.png")
         self.video_label.setPixmap(wa_background.scaled(self.width(), self.height(), Qt.KeepAspectRatio))
 
         # Create the grid layout for the main window
@@ -75,7 +75,7 @@ class MainWindowWA(QWidget):
 
     def handleLogin(self):
         try:
-            with open('ConfigurationWA.txt', 'r') as f:
+            with open('../ConfigurationWA.txt', 'r') as f:
                 usernameWA = f.readline().strip()
                 passwordWA = f.readline().strip()
                 ip_addressWA = f.readline().strip()
@@ -94,7 +94,6 @@ class MainWindowWA(QWidget):
                 f"Login successful for source 1. Username: {usernameWA}, Password: {passwordWA}, IP Address: {ip_addressWA}")
             print("Login successful! Streaming video...")
         except Exception as e:
-
             ErrorHandler.displayErrorMessage(f"This is error in login handler for WA \n{e}")
 
     def calculateWindowDimensions(self, width, height):

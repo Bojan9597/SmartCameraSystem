@@ -150,41 +150,6 @@ class Ptz_Handler:
     
     def zeep_pythonvalue(self, xmlvalue):
         return xmlvalue
-    # def move_up(self, MainWindow, ptz):
-    #     try:
-    #         self.request.Velocity.Zoom.x = 0
-    #         self.request.Velocity.PanTilt.x = 0
-    #         self.request.Velocity.PanTilt.y = self.YMAX
-    #         ptz.ContinuousMove(self.request)
-    #     except Exception as e:
-    #         ErrorHandler.displayErrorMessage(f"This is error message in move up: \n {e}" )
-    #
-    # def move_down(self,MainWindow, ptz):
-    #     try:
-    #         self.request.Velocity.Zoom.x = 0
-    #         self.request.Velocity.PanTilt.x = 0
-    #         self.request.Velocity.PanTilt.y = self.YMIN
-    #         ptz.ContinuousMove(self.request)
-    #     except Exception as e:
-    #         ErrorHandler.displayErrorMessage(f"This is error message in move down: \n {e}" )
-
-    # def move_right(self, MainWindow, ptz):
-    #     try:
-    #         self.request.Velocity.Zoom.x = 0
-    #         self.request.Velocity.PanTilt.x = self.XMAX
-    #         self.request.Velocity.PanTilt.y = 0
-    #         ptz.ContinuousMove(self.request)
-    #     except Exception as e:
-    #         ErrorHandler.displayErrorMessage(f"This is error message in move right: \n {e}" )
-    #
-    # def move_left(self, MainWindow, ptz):
-    #     try:
-    #         self.request.Velocity.Zoom.x = 0
-    #         self.request.Velocity.PanTilt.x = self.XMIN
-    #         self.request.Velocity.PanTilt.y = 0
-    #         ptz.ContinuousMove(self.request)
-    #     except Exception as e:
-    #         ErrorHandler.displayErrorMessage(f"This is error message in move left: \n {e}" )
     def zoom_up(self, ptz):
         try:
             self.request.Velocity.Zoom.x = 1

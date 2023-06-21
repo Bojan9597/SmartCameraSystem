@@ -79,7 +79,7 @@ class MainWindowHandler:
             ErrorHandler.displayErrorMessage(f"This is error in updating PTZ frames: \n {e}")
     def handleLoginPTZ(self):
         try:
-            with open('ConfigurationPTZ.txt', 'r') as f:
+            with open('../ConfigurationPTZ.txt', 'r') as f:
                 usernamePTZ = f.readline().strip()
                 passwordPTZ = f.readline().strip()
                 ip_addressPTZ = f.readline().strip()
@@ -107,7 +107,7 @@ class MainWindowHandler:
 
     def handleLoginWA(self):
         try:
-            with open('ConfigurationWA.txt', 'r') as f:
+            with open('../ConfigurationWA.txt', 'r') as f:
                 usernameWA = f.readline().strip()
                 passwordWA = f.readline().strip()
                 ip_addressWA = f.readline().strip()

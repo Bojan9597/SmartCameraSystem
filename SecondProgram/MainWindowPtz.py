@@ -33,7 +33,7 @@ class MainWindowPTZ(QWidget):
         self.video_label.setAlignment(Qt.AlignCenter)
         # Set the background image for the video label
         ptz_background = QPixmap(
-            "C:/Users/bojan/Desktop/Once_DE_Project/Once_DE_Project/FirstProgram/images/wideAngleCamera.png")
+            "images/ptzCamera.png")
         self.video_label.setPixmap(ptz_background.scaled(self.width(), self.height(), Qt.KeepAspectRatio))
 
         # Create the grid layout for the main window
@@ -60,7 +60,7 @@ class MainWindowPTZ(QWidget):
             print(f"This is exception in moving to position {e}")
     def handleLogin(self):
         try:
-            with open('ConfigurationPTZ.txt', 'r') as f:
+            with open('../ConfigurationPTZ.txt', 'r') as f:
                 usernamePTZ = f.readline().strip()
                 passwordPTZ = f.readline().strip()
                 ip_addressPTZ = f.readline().strip()
