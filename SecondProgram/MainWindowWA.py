@@ -72,24 +72,5 @@ class MainWindowWA(QWidget):
         self.file_button.setText(f"File is chosen: {self.selectedFile}")
         self.fileIsSelectedSignal.emit(self.selectedFile)
 
-    def calculateWindowDimensions(self, width, height):
-        try:
-            aspect_ratioPTZ = width / height
-            current_screen = QDesktopWidget().screenGeometry(self)
-            screenWidthPTZ = current_screen.width()
-            screenHeightPTZ = current_screen.height()
-
-            aspect_ratio = screenWidthPTZ / screenHeightPTZ
-            if aspect_ratioPTZ > aspect_ratio:
-                widthPTZ = screenWidthPTZ
-                heightPTZ = widthPTZ / aspect_ratioPTZ
-            else:
-                heightPTZ = screenHeightPTZ
-                widthPTZ = heightPTZ * aspect_ratioPTZ
-
-            return widthPTZ * 0.9, heightPTZ * 0.9
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"Error in calculating Window dimensions for WA camera: \n {e}")
-
 
 
