@@ -112,7 +112,26 @@ class MainWindow(QWidget):
             pass
         elif self.coordinates == []:
             self.coordinates.extend(self.readCoordinatesFromFile(self.selectedFile))
+    def getOnvifStream(self, username,password,ip_address):
+        camera = ONVIFCamera(ip_address, 80, username, password)
 
+        # Get media service
+        media_service = camera.create_media_service()
+
+        # Get available profiles
+        profiles = media_service.GetProfiles()
+
+        # Select the first profile
+        profile_token = profiles[0].token
+        # Get the stream URI
+        stream_uri = media_service.GetStreamUri({
+        'StreamSetup': {'Stream': 'RTP-Unicast', 'Transport': {'Protocol': 'RTSP'}},
+        'ProfileToken': profile_token
+        })
+        camera_url =  stream_uri.Uri
+        camera_url = camera_url.replace('rtsp://', f"rtsp://{username}:{password}@")
+        return camera_url
+    
     @pyqtSlot(str, str, str, str, str, bool)
     def handleLogin(self, source, username, password, ip_address, selectedFile, isNewCalibraion):
 
@@ -125,8 +144,8 @@ class MainWindow(QWidget):
                     self.coordinates.extend(self.readCoordinatesFromFile(self.selectedFile))
 
                 # Write the coordinates to the file
-                camera_url = f"rtsp://{username}:{password}@{ip_address}/Streaming/Channels/1"
-                capture = cv2.VideoCapture()
+                camera_url = self.getOnvifStream(username,password,ip_address)
+                capture = cv2.VideoCapture(camera_url)
 
                 def connect_to_camera():
                     capture.open(camera_url)
