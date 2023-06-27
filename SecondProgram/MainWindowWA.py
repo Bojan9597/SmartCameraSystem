@@ -1,11 +1,11 @@
 import os.path
 
 import cv2
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QGridLayout,QDesktopWidget, QFileDialog, QPushButton
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtCore import Qt, QTimer
+from PySide2.QtWidgets import QApplication, QWidget, QLabel, QGridLayout,QDesktopWidget, QFileDialog, QPushButton
+from PySide2.QtGui import QImage, QPixmap
+from PySide2.QtCore import Qt, QTimer
 from CoordinatesCalculator import CoordinatesCalculator
-from PyQt5.QtCore import pyqtSignal
+from PySide2.QtCore import Signal
 from ErrorHandler import ErrorHandler
 class MainWindowWA(QWidget):
     camera_url_WA = ""
@@ -13,8 +13,8 @@ class MainWindowWA(QWidget):
     saveprefix = ""
     media_profile = ""
     request = ""
-    moveToPositionSignal = pyqtSignal(float, float)
-    fileIsSelectedSignal = pyqtSignal(str)
+    moveToPositionSignal = Signal(float, float)
+    fileIsSelectedSignal = Signal(str)
 
 
     def __init__(self):
@@ -70,31 +70,6 @@ class MainWindowWA(QWidget):
         self.fileIsSelected = True
         self.file_button.setText(f"File is chosen: {self.selectedFile}")
         self.fileIsSelectedSignal.emit(self.selectedFile)
-
-
-
-    def handleLogin(self):
-        try:
-            with open('../ConfigurationWA.txt', 'r') as f:
-                usernameWA = f.readline().strip()
-                passwordWA = f.readline().strip()
-                ip_addressWA = f.readline().strip()
-                cameraResolution = f.readline().strip().split(', ')
-
-            width, height = map(float, cameraResolution)
-            screenWidthWA, screenHeightWA = self.calculateWindowDimensions(width,height)
-            self.video_label.setMinimumSize(screenWidthWA,screenHeightWA)
-            self.video_label.setMaximumSize(screenWidthWA,screenHeightWA+30)
-            self.setMaximumWidth(QDesktopWidget().screenGeometry().width())
-            self.setGeometry(0,0,screenWidthWA, screenHeightWA)
-            self.camera_url_wa = f"rtsp://{usernameWA}:{passwordWA}@{ip_addressWA}/Streaming/Channels/1"
-            self.captureWA = cv2.VideoCapture(self.camera_url_wa)
-            self.readWA = True
-            print(
-                f"Login successful for source 1. Username: {usernameWA}, Password: {passwordWA}, IP Address: {ip_addressWA}")
-            print("Login successful! Streaming video...")
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"This is error in login handler for WA \n{e}")
 
     def calculateWindowDimensions(self, width, height):
         try:

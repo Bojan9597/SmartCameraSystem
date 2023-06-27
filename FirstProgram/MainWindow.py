@@ -1,7 +1,7 @@
 import cv2
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QGridLayout, QLineEdit, QMessageBox, QSizePolicy, QDesktopWidget, QPushButton
-from PyQt5.QtGui import QImage, QPixmap, QFont
-from PyQt5.QtCore import Qt, QTimer, pyqtSlot
+from PySide2.QtWidgets import QApplication, QWidget, QLabel, QGridLayout, QLineEdit, QMessageBox, QSizePolicy, QDesktopWidget, QPushButton
+from PySide2.QtGui import QImage, QPixmap, QFont
+from PySide2.QtCore import Qt, QTimer, Slot
 from Ptz_Handler import *
 from ErrorHandler import ErrorHandler
 import threading
@@ -104,7 +104,7 @@ class MainWindow(QWidget):
         register_button.mousePressEvent = self.register_button_mousePressEvent
 
     ###############################   Functions  ################################################################
-    @pyqtSlot(str, bool)
+    @Slot(str, bool)
     def handleFileSelected(self, selectedFile, isNewCalibration):
         self.selectedFile = selectedFile
         self.isNewCalibration = isNewCalibration
@@ -132,7 +132,7 @@ class MainWindow(QWidget):
         camera_url = camera_url.replace('rtsp://', f"rtsp://{username}:{password}@")
         return camera_url
     
-    @pyqtSlot(str, str, str, str, str, bool)
+    @Slot(str, str, str, str, str, bool)
     def handleLogin(self, source, username, password, ip_address, selectedFile, isNewCalibraion):
 
         try:

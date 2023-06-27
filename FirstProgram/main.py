@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication
+from PySide2.QtWidgets import QApplication
 from LogInWindow import LoginWindow
 from MainWindow import MainWindow
 

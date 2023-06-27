@@ -1,9 +1,9 @@
 import cv2
-from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout,QDesktopWidget
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt, QTimer
+from PySide2.QtWidgets import QWidget, QLabel, QGridLayout,QDesktopWidget
+from PySide2.QtGui import QPixmap
+from PySide2.QtCore import Qt, QTimer
 from CoordinatesCalculator import CoordinatesCalculator
-from PyQt5.QtCore import pyqtSlot
+from PySide2.QtCore import Slot
 from ErrorHandler import ErrorHandler
 from Ptz_Handler import Ptz_Handler
 from threading import Thread
@@ -23,6 +23,12 @@ class MainWindowPTZ(QWidget):
         self.screenHeight = screen.height()
         self.ptz_handler = Ptz_Handler(self)
         # Create a label for displaying the camera name
+        screen = QDesktopWidget().screenGeometry()
+        initial_width = screen.width()
+        initial_height = 650
+        self.setMaximumWidth(initial_width)
+        self.setGeometry(0, 0, initial_width, initial_height)
+
         self.camera_label = QLabel("PTZ Camera")
         self.camera_label.setAlignment(Qt.AlignCenter)
         self.camera_label.setMaximumHeight(30)
@@ -49,7 +55,7 @@ class MainWindowPTZ(QWidget):
 
         # self.handleLogin()
 
-    @pyqtSlot(float, float)
+    @Slot(float, float)
     def moveToPosition(self, x, y):
         try:
             move_thread = Thread(target=self.ptz_handler.move_to_position,
@@ -57,33 +63,7 @@ class MainWindowPTZ(QWidget):
             move_thread.start()
         except Exception as e:
             print(f"This is exception in moving to position {e}")
-    def handleLogin(self):
-        try:
-            with open('../ConfigurationPTZ.txt', 'r') as f:
-                usernamePTZ = f.readline().strip()
-                passwordPTZ = f.readline().strip()
-                ip_addressPTZ = f.readline().strip()
-                cameraResolution = f.readline().strip().split(', ')
 
-            width, height = map(float, cameraResolution)
-            screenWidthPTZ, screenHeightPTZ = self.calculateWindowDimensions(width,height)
-            self.video_label.setMinimumSize(screenWidthPTZ,screenHeightPTZ)
-            self.video_label.setMaximumSize(screenWidthPTZ,screenHeightPTZ+30)
-            self.setMaximumWidth(QDesktopWidget().screenGeometry().width())
-            self.setGeometry(0,200,screenWidthPTZ, screenHeightPTZ)
-            self.camera_url_ptz = f"rtsp://{usernamePTZ}:{passwordPTZ}@{ip_addressPTZ}/Streaming/Channels/1"
-            self.capturePTZ = cv2.VideoCapture(self.camera_url_ptz)
-            self.readPTZ = True
-            print(
-                f"Login successful for source 1. Username: {usernamePTZ}, Password: {passwordPTZ}, IP Address: {ip_addressPTZ}")
-            print("Login successful! Streaming video...")
-
-            camera_data = {"ip": ip_addressPTZ, "port": 80, "username": usernamePTZ, "password": passwordPTZ}
-            self.ptz_handler.make_ptz_handler(self, None, camera_data)
-
-
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"This is error in login handler for PTZ \n{e}")
     def add_red_cross(self, frame):
         try:
             # Get the frame dimensions
@@ -102,25 +82,6 @@ class MainWindowPTZ(QWidget):
             cv2.line(frame, (center_x, center_y - 20), (center_x, center_y + 20), color, thickness)
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"This is error in adding red cross: \n {e}")
-
-    def calculateWindowDimensions(self, width, height):
-        try:
-            aspect_ratioPTZ = width / height
-            current_screen = QDesktopWidget().screenGeometry(self)
-            screenWidthPTZ = current_screen.width()
-            screenHeightPTZ = current_screen.height()
-
-            aspect_ratio = screenWidthPTZ / screenHeightPTZ
-            if aspect_ratioPTZ > aspect_ratio:
-                widthPTZ = screenWidthPTZ
-                heightPTZ = widthPTZ / aspect_ratioPTZ
-            else:
-                heightPTZ = screenHeightPTZ
-                widthPTZ = heightPTZ * aspect_ratioPTZ
-
-            return widthPTZ * 0.9, heightPTZ * 0.9
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"Error in calculating Window dimensions for PTZ camera: \n {e}")
 
 
 

@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication
+from PySide2.QtCore import QTimer
+from PySide2.QtWidgets import QApplication
 from MainWindowWA import MainWindowWA
 from MainWindowPtz import MainWindowPTZ
 from MainWindowHandler import MainWindowHandler

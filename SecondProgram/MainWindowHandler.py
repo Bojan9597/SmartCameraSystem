@@ -1,14 +1,18 @@
 from MainWindowWA import MainWindowWA
 from MainWindowPtz import  MainWindowPTZ
-from PyQt5.QtCore import QTimer, pyqtSlot
+from PySide2.QtCore import QTimer, Slot
 from ErrorHandler import ErrorHandler
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QLabel, QGridLayout,QDesktopWidget
+from PySide2.QtGui import QImage, QPixmap
+from PySide2.QtCore import Qt
+from PySide2.QtWidgets import QWidget, QLabel, QGridLayout,QDesktopWidget
 import cv2
 from CoordinatesCalculator import CoordinatesCalculator
+from onvif import ONVIFCamera
+from PySide2.QtGui import QGuiApplication, QScreen
+
 
 class MainWindowHandler:
+    screen = None
     def __init__(self):
         self.mainWindowWA = MainWindowWA()
         self.mainWindowPTZ = MainWindowPTZ()
@@ -77,6 +81,27 @@ class MainWindowHandler:
                     self.mainWindowPTZ.video_label.setPixmap(QPixmap.fromImage(scaled_imagePTZ))
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"This is error in updating PTZ frames: \n {e}")
+
+    def getOnvifStream(self, username,password,ip_address):
+        camera = ONVIFCamera(ip_address, 80, username, password)
+
+        # Get media service
+        media_service = camera.create_media_service()
+
+        # Get available profiles
+        profiles = media_service.GetProfiles()
+
+        # Select the first profile
+        profile_token = profiles[0].token
+        # Get the stream URI
+        stream_uri = media_service.GetStreamUri({
+        'StreamSetup': {'Stream': 'RTP-Unicast', 'Transport': {'Protocol': 'RTSP'}},
+        'ProfileToken': profile_token
+        })
+        camera_url =  stream_uri.Uri
+        camera_url = camera_url.replace('rtsp://', f"rtsp://{username}:{password}@")
+        return camera_url
+    
     def handleLoginPTZ(self):
         try:
             with open('../ConfigurationPTZ.txt', 'r') as f:
@@ -86,12 +111,14 @@ class MainWindowHandler:
                 cameraResolution = f.readline().strip().split(', ')
 
             width, height = map(float, cameraResolution)
-            screenWidthPTZ, screenHeightPTZ = self.mainWindowWA.calculateWindowDimensions(width,height)
-            self.mainWindowPTZ.video_label.setMinimumSize(screenWidthPTZ,screenHeightPTZ)
-            self.mainWindowPTZ.video_label.setMaximumSize(screenWidthPTZ,screenHeightPTZ+30)
-            self.mainWindowPTZ.setMaximumWidth(QDesktopWidget().screenGeometry().width())
-            self.mainWindowPTZ.setGeometry(0,200,screenWidthPTZ, screenHeightPTZ)
-            self.mainWindowPTZ.camera_url_ptz = f"rtsp://{usernamePTZ}:{passwordPTZ}@{ip_addressPTZ}/Streaming/Channels/1"
+            aspectRatioPTZ =  height / width
+            screen = QGuiApplication.primaryScreen().availableGeometry()
+            self.mainWindowPTZ.setGeometry(10, 10, screen.width() , int((screen.width()) * aspectRatioPTZ) + 2*self.mainWindowPTZ.camera_label.height())
+
+            self.mainWindowPTZ.setMaximumSize(screen.width() , int((screen.width()) * aspectRatioPTZ) + 2*self.mainWindowPTZ.camera_label.height())
+            self.mainWindowPTZ.video_label.setMaximumSize(screen.width(), int((screen.width()) * aspectRatioPTZ))
+
+            self.mainWindowPTZ.camera_url_ptz = self.getOnvifStream(usernamePTZ,passwordPTZ,ip_addressPTZ)
             self.capturePTZ = cv2.VideoCapture(self.mainWindowPTZ.camera_url_ptz)
             self.readPTZ = True
             print(
@@ -104,6 +131,7 @@ class MainWindowHandler:
 
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"This is error in login handler for PTZ \n{e}")
+            print(e)
 
     def handleLoginWA(self):
         try:
@@ -114,12 +142,13 @@ class MainWindowHandler:
                 cameraResolution = f.readline().strip().split(', ')
 
             width, height = map(float, cameraResolution)
-            screenWidthWA, screenHeightWA = self.mainWindowWA.calculateWindowDimensions(width,height)
-            self.mainWindowWA.video_label.setMinimumSize(screenWidthWA,screenHeightWA)
-            self.mainWindowWA.video_label.setMaximumSize(screenWidthWA,screenHeightWA+30)
-            self.mainWindowWA.setMaximumWidth(QDesktopWidget().screenGeometry().width())
-            self.mainWindowWA.setGeometry(0,0,screenWidthWA, screenHeightWA)
-            self.mainWindowWA.camera_url_wa = f"rtsp://{usernameWA}:{passwordWA}@{ip_addressWA}/Streaming/Channels/1"
+            aspectRatioWA = height/width
+            screen = QGuiApplication.primaryScreen().availableGeometry()
+            self.mainWindowWA.setGeometry(10, 10, screen.width() , int((screen.width()) * aspectRatioWA) + 2*self.mainWindowWA.camera_label.height())
+
+            self.mainWindowWA.setMaximumSize(screen.width() , int((screen.width()) * aspectRatioWA) + 2*self.mainWindowWA.camera_label.height())
+            self.mainWindowWA.video_label.setMaximumSize(screen.width(), int((screen.width()) * aspectRatioWA))
+            self.mainWindowWA.camera_url_wa = self.getOnvifStream(usernameWA,passwordWA,ip_addressWA)
             self.captureWA = cv2.VideoCapture(self.mainWindowWA.camera_url_wa)
             self.readWA = True
             print(
@@ -162,6 +191,6 @@ class MainWindowHandler:
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"This is error in mouse press event for WA camera: \n {e}")
 
-    @pyqtSlot(str, str, str, str, str)
+    @Slot(str, str, str, str, str)
     def handleIsFileSelected(self,selectedFile):
         self.selectedFile = selectedFile

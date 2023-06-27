@@ -2,7 +2,7 @@ from pynput import keyboard
 from onvif import ONVIFCamera
 import zeep
 import time
-from PyQt5.QtWidgets import QMessageBox
+from PySide2.QtWidgets import QMessageBox
 from ErrorHandler import  ErrorHandler
 
 class Ptz_Handler:

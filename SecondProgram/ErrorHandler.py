@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMessageBox
+from PySide2.QtWidgets import QMessageBox
 
 class ErrorHandler:
     @staticmethod

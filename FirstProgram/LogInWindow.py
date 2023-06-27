@@ -1,11 +1,11 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QMessageBox, QGridLayout, QFileDialog, QCheckBox
-from PyQt5.QtCore import pyqtSignal
+from PySide2.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QMessageBox, QGridLayout, QFileDialog, QCheckBox
+from PySide2.QtCore import Signal
 from ErrorHandler import ErrorHandler
 import os
 
 class LoginWindow(QWidget):
-    loginSuccessful = pyqtSignal(str, str, str, str, str, bool)
-    fileSelected = pyqtSignal(str, bool)
+    loginSuccessful = Signal(str, str, str, str, str, bool)
+    fileSelected = Signal(str, bool)
 
     def __init__(self):
         super().__init__()
