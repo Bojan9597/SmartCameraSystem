@@ -1,4 +1,4 @@
-from PySide2.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QMessageBox, QGridLayout, QFileDialog, QCheckBox
+from PySide2.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QMessageBox, QGridLayout, QFileDialog, QCheckBox, QDialog
 from PySide2.QtCore import Signal
 from ErrorHandler import ErrorHandler
 import os
@@ -96,7 +96,8 @@ class LoginWindow(QWidget):
     def choose_file(self):
         file_dialog = QFileDialog()
         file_dialog.exec_()
-        selected_file = file_dialog.selectedFiles()
+        if file_dialog.result() == QDialog.Accepted:
+            selected_file = file_dialog.selectedFiles()
         if selected_file:
             print("Selected file:", selected_file[0])
         self.selectedFile = os.path.abspath(selected_file[0])
