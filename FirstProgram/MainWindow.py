@@ -262,8 +262,8 @@ class MainWindow(QWidget):
                         QImage.Format_RGB888
                     )
                     scaled_imageWA = imageWA.scaled(
-                        self.right_label.width(),
-                        self.right_label.height(),
+                        self.left_label.width(),
+                        self.left_label.height(),
                         Qt.KeepAspectRatio
                     )
                     self.left_label.setPixmap(QPixmap.fromImage(scaled_imageWA))
@@ -286,8 +286,8 @@ class MainWindow(QWidget):
                         QImage.Format_RGB888
                     )
                     scaled_imagePTZ = imagePTZ.scaled(
-                        self.left_label.width(),
-                        self.left_label.height(),
+                        self.right_label.width(),
+                        self.right_label.height(),
                         Qt.KeepAspectRatio
                     )
                     self.right_label.setPixmap(QPixmap.fromImage(scaled_imagePTZ))
