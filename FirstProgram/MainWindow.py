@@ -5,6 +5,7 @@ from PySide2.QtCore import Qt, QTimer, Slot
 from Ptz_Handler import *
 from ErrorHandler import ErrorHandler
 import threading
+from MainWindowFunctions import *
 
 class MainWindow(QWidget):
     coordinates = []
@@ -21,18 +22,14 @@ class MainWindow(QWidget):
         self.isNewCalibration = True
         self.selectedFile = "CalibrationCoordinates.txt"
         self.setWindowTitle("Calibration Program")
-        self.frameWidthPTZ, self.frameHeightPTZ = 0,0
-        self.frameWidthWA, self.frameHeightWA = 0,0
+        self.frameWidthPTZ, self.frameHeightPTZ = 0, 0
+        self.frameWidthWA, self.frameHeightWA = 0, 0
         screen = QDesktopWidget().screenGeometry()
         initial_width = screen.width()
         initial_height = 650
         self.setMaximumWidth(initial_width)
         self.setGeometry(0, 100, initial_width, initial_height)
         self.setStyleSheet("background-color: #C9A098;")
-        # Create left and right labels for displaying video frames
-        self.left_label = QLabel()
-        self.right_label = QLabel()
-
         # Create the grid layout for the main window
         grid = QGridLayout()
         grid.setColumnStretch(0, 1)
@@ -40,6 +37,15 @@ class MainWindow(QWidget):
         grid.setColumnStretch(2, 1)
         grid.setColumnStretch(3, 1)
         self.setLayout(grid)
+
+        # Create a placeholder label
+        placeholder_label = QLabel()
+        placeholder_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        placeholder_label.setMinimumHeight(30)
+
+        # Create left and right labels for displaying video frames
+        self.left_label = QLabel()
+        self.right_label = QLabel()
 
         # Create WA coordinates labels
         wa_coordinates_label = QLabel("WA Coordinates")
@@ -59,19 +65,20 @@ class MainWindow(QWidget):
         select_label.setFont(QFont("Arial", 12, QFont.Bold))
 
         # Create button for registering pan and tilt
-        register_button = QPushButton("Register Pan and Tilt")
-        register_button.setFont(QFont("Arial", 12, QFont.Bold))
-        register_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        self.register_button = QPushButton("Register Pan and Tilt")
+        self.register_button.setFont(QFont("Arial", 12, QFont.Bold))
+        self.register_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
 
         # Add labels, button, and select label to the grid layout
         grid.addWidget(wa_coordinates_label, 0, 0, 1, 2, Qt.AlignCenter)
         grid.addWidget(ptz_coordinates_label, 0, 2, 1, 2, Qt.AlignCenter)
         grid.addWidget(select_label, 1, 0, 1, 2, Qt.AlignCenter)
-        grid.addWidget(register_button, 1, 2, 1, 2, Qt.AlignCenter)
+        grid.addWidget(self.register_button, 1, 2, 1, 2, Qt.AlignCenter)
 
-        # Add left and right labels to the grid layout
-        grid.addWidget(self.left_label, 2, 0, 1, 2)
-        grid.addWidget(self.right_label, 2, 2, 1, 2)
+        # Add placeholder label, left and right labels to the grid layout
+        grid.addWidget(placeholder_label, 2, 0, 1, 2)
+        grid.addWidget(self.left_label, 3, 0, 1, 2)
+        grid.addWidget(self.right_label, 3, 2, 1, 2)
 
         # Set the alignment and size policy for the labels
         self.left_label.setAlignment(Qt.AlignCenter)
@@ -100,8 +107,8 @@ class MainWindow(QWidget):
         self.right_label.setMouseTracking(True)
 
         # Connect mouse press event to the labels
-        self.left_label.mousePressEvent = self.left_label_mousePressEvent
-        register_button.mousePressEvent = self.register_button_mousePressEvent
+        self.left_label.mousePressEvent = lambda event: left_label_mousePressEvent(self, event)
+        self.register_button.mousePressEvent = lambda event: register_button_mousePressEvent(self, event)
 
     ###############################   Functions  ################################################################
     @Slot(str, bool)
@@ -167,7 +174,7 @@ class MainWindow(QWidget):
                     self.captureWA = capture
                     self.readWA = True
                     self.frameWidthWA, self.frameHeightWA = self.captureWA.get(cv2.CAP_PROP_FRAME_WIDTH), self.captureWA.get(cv2.CAP_PROP_FRAME_HEIGHT)
-                    self.calculateWindowCoordinates(source, self.frameWidthWA,self.frameHeightWA)
+                    calculateWindowCoordinates(self, source, self.frameWidthWA,self.frameHeightWA)
                     print(
                         f"Login successful for source 1. Username: {username}, Password: {password}, IP Address: {ip_address}")
                     try:
@@ -184,7 +191,7 @@ class MainWindow(QWidget):
                     self.capturePTZ = capture
                     self.readPTZ = True
                     self.frameWidthPTZ, self.frameHeightPTZ = self.capturePTZ.get(cv2.CAP_PROP_FRAME_WIDTH), self.capturePTZ.get(cv2.CAP_PROP_FRAME_HEIGHT)
-                    self.calculateWindowCoordinates(source, self.frameWidthPTZ, self.frameHeightPTZ)
+                    calculateWindowCoordinates(self, source, self.frameWidthPTZ, self.frameHeightPTZ)
                     print(
                         f"Login successful for source 2. Username: {username}, Password: {password}, IP Address: {ip_address}")
                     try:
@@ -221,31 +228,6 @@ class MainWindow(QWidget):
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"Error in login handler: \n {e}")
 
-    def add_red_cross(self, frame):
-        try:
-            # Get the frame dimensions
-            frame_height, frame_width, _ = frame.shape
-
-            # Calculate the center coordinates
-            center_x = frame_width // 2
-            center_y = frame_height // 2
-
-            # Define the cross line properties
-            color = (255, 0, 0)  # Red color
-            thickness = 2
-
-            # Draw the cross lines
-            cv2.line(frame, (center_x - 20, center_y), (center_x + 20, center_y), color, thickness)
-            cv2.line(frame, (center_x, center_y - 20), (center_x, center_y + 20), color, thickness)
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"This is error in adding red cross: \n {e}")
-
-    def add_dots_on_image(self,frame):
-        width, height = frame.shape[:2]
-        for i in range(6):
-            for j in range(5):
-                cv2.circle(frame, (int(height/5*i), int(width/4*j)), 10, (0, 0, 255), -1)
-
     def update_video_frames(self):
         try:
             if self.readWA and self.captureWA is not None and self.captureWA.isOpened():
@@ -254,7 +236,7 @@ class MainWindow(QWidget):
                     self.captureWA = cv2.VideoCapture(self.camera_url_wa)
                 if retWA:
                     frameWA_rgb = cv2.cvtColor(frameWA, cv2.COLOR_BGR2RGB)
-                    self.add_dots_on_image(frameWA_rgb)
+                    add_dots_on_image(self, frameWA_rgb)
                     imageWA = QImage(
                         frameWA_rgb.data,
                         frameWA_rgb.shape[1],
@@ -277,7 +259,7 @@ class MainWindow(QWidget):
                 if retPTZ:
                     framePTZ_rgb = cv2.cvtColor(framePTZ, cv2.COLOR_BGR2RGB)
                     # Add the red cross to the frame
-                    self.add_red_cross(framePTZ_rgb)
+                    add_red_cross(self, framePTZ_rgb)
 
                     imagePTZ = QImage(
                         framePTZ_rgb.data,
@@ -293,124 +275,3 @@ class MainWindow(QWidget):
                     self.right_label.setPixmap(QPixmap.fromImage(scaled_imagePTZ))
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"This is error in updating PTZ frames: \n {e}")
-
-    def left_label_mousePressEvent(self, event):
-        try:
-            if not self.isWAChoosed:
-                self.isWAChoosed = True
-                if self.isWAChoosed:
-                    self.left_label.setStyleSheet('border: none;')
-                    self.right_label.setStyleSheet('border: 3px solid blue; padding: 1px;')
-                if self.captureWA is not None and self.captureWA.isOpened():
-                    # Get the mouse position relative to the label
-                    pos = event.pos()
-                    width_ratio = pos.x() / self.left_label.width()
-                    height_ratio = pos.y() / self.left_label.height()
-
-                    # Get the frame dimensions
-                    retWA, frameWA = self.captureWA.read()
-                    if retWA:
-                        frame_height, frame_width, _ = frameWA.shape
-
-                        # Calculate the coordinates in the frame
-                        x = int(width_ratio * frame_width)
-                        y = int(height_ratio * frame_height)
-                        print(x,y)
-                        self.coordinates.extend((x, y))
-                        print(self.coordinates)
-        except Exception as e:
-            print(f"This is error in handling left label mouse press: \n {e}")
-
-    def register_button_mousePressEvent(self, event):
-        try:
-            print(self.selectedFile)
-            if self.isWAChoosed:
-                self.isWAChoosed = False
-                if not self.isWAChoosed:
-                    self.left_label.setStyleSheet('border: 3px solid blue; padding: 1px;')
-                    self.right_label.setStyleSheet('border: none;')
-                if self.capturePTZ is not None and self.capturePTZ.isOpened():
-                    # Get the mouse position relative to the label
-                    pos = event.pos()
-                    width_ratio = pos.x() / self.right_label.width()
-                    height_ratio = pos.y() / self.right_label.height()
-
-                    # Get the frame dimensions
-                    retPTZ, framePTZ = self.capturePTZ.read()
-                    if retPTZ:
-                        frame_height, frame_width, _ = framePTZ.shape
-
-                        # Calculate the coordinates in the frame
-                        x = int(width_ratio * frame_width)
-                        y = int(height_ratio * frame_height)
-                        print(x,y)
-                        x,y,zoom = self.ptz_handler.get_position(self,self.ptz,self.media_profile)
-                        self.coordinates.extend((x, y, zoom))
-
-                        if len(self.coordinates)/5 >= 4:
-                            try:
-                                with open(self.selectedFile, "w") as file:
-                                    for i in range(int(len(self.coordinates) / 5)):
-                                        file.write(
-                                            f"X: {self.coordinates[i * 5 + 0]}, Y: {self.coordinates[i * 5 + 1]}, pan: {self.coordinates[i * 5 + 2]}, "
-                                            f"tilt: {self.coordinates[i * 5 + 3]}, zoom: {self.coordinates[i * 5 + 4]}\n")
-                            except Exception as e:
-                                ErrorHandler.displayErrorMessage("Can not open file file for calibrating coordinates")
-                        print(self.coordinates)
-
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"Error in register button press event: \n {e}")
-
-    def keyPressEvent(self, event):
-        try:
-            key = event.key()
-            if key == Qt.Key_U:  # 'u' key
-                self.isWAChoosed = False
-                if len(self.coordinates) % 5 != 0:  # Length is not divisible by 5
-                    if len(self.coordinates) >= 2:
-                        self.coordinates.pop()
-                        self.coordinates.pop()
-                elif len(self.coordinates) % 5 == 0:  # Length is divisible by 5
-                    if len(self.coordinates) >= 5:
-                        for _ in range(5):
-                            self.coordinates.pop()
-                ErrorHandler.displayMessage(f"Last coordinates are removed")
-                print(self.coordinates)
-            elif key == Qt.Key_E:  # 'e' key
-                self.coordinates = []
-                ErrorHandler.displayMessage(f"Coordinates emptied")
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"Error in handling key press events: \n {e}")
-
-    def readCoordinatesFromFile(self, selectedFile):
-        try:
-            with open(selectedFile, 'r') as file:
-                lines = file.readlines()
-            coordinates = []
-            # Process each line and extract the values
-            for line in lines:
-                line = line.strip()
-                if line.startswith("X:"):
-                    parts = line.split(", ")
-                    x = int(parts[0].split(":")[1].strip())
-                    y = int(parts[1].split(":")[1].strip())
-                    pan = float(parts[2].split(":")[1].strip())
-                    tilt = float(parts[3].split(":")[1].strip())
-                    zoom = float(parts[4].split(":")[1].strip())
-
-                    # Add the values to the coordinates array
-                    coordinates.extend((x, y, pan, tilt, zoom))
-            return coordinates
-        except Exception as e:
-            return []
-            ErrorHandler.displayErrorMessage("File does not exist, calibration must be done from beggining")
-
-    def calculateWindowCoordinates(self, source, width, height):
-        if source =="1":
-            aspectRatioPTZ = height/width
-            self.left_label.setMaximumSize(self.width() // 2 - 30, int((self.width() // 2 - 30) * aspectRatioPTZ))
-            self.left_label.setStyleSheet('border: 3px solid blue; padding: 1px;')
-        if source == "2":
-            aspectRatioWA = height/ width
-            self.right_label.setMaximumSize(self.width() // 2 - 30, int(((self.width() // 2 - 30)*aspectRatioWA)))
-            self.left_label.setStyleSheet('border: 3px solid blue; padding: 1px;')
