@@ -236,7 +236,7 @@ class MainWindow(QWidget):
                     self.captureWA = cv2.VideoCapture(self.camera_url_wa)
                 if retWA:
                     frameWA_rgb = cv2.cvtColor(frameWA, cv2.COLOR_BGR2RGB)
-                    add_dots_on_image(self, frameWA_rgb)
+                    self.add_dots_on_image(frameWA_rgb)
                     imageWA = QImage(
                         frameWA_rgb.data,
                         frameWA_rgb.shape[1],
@@ -259,7 +259,7 @@ class MainWindow(QWidget):
                 if retPTZ:
                     framePTZ_rgb = cv2.cvtColor(framePTZ, cv2.COLOR_BGR2RGB)
                     # Add the red cross to the frame
-                    add_red_cross(self, framePTZ_rgb)
+                    self.add_red_cross(framePTZ_rgb)
 
                     imagePTZ = QImage(
                         framePTZ_rgb.data,
@@ -275,3 +275,28 @@ class MainWindow(QWidget):
                     self.right_label.setPixmap(QPixmap.fromImage(scaled_imagePTZ))
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"This is error in updating PTZ frames: \n {e}")
+
+    def add_red_cross(self, frame):
+        try:
+            # Get the frame dimensions
+            frame_height, frame_width, _ = frame.shape
+
+            # Calculate the center coordinates
+            center_x = frame_width // 2
+            center_y = frame_height // 2
+
+            # Define the cross line properties
+            color = (255, 0, 0)  # Red color
+            thickness = 2
+
+            # Draw the cross lines
+            cv2.line(frame, (center_x - 20, center_y), (center_x + 20, center_y), color, thickness)
+            cv2.line(frame, (center_x, center_y - 20), (center_x, center_y + 20), color, thickness)
+        except Exception as e:
+            ErrorHandler.displayErrorMessage(f"This is error in adding red cross: \n {e}")
+
+    def add_dots_on_image(self,frame):
+        width, height = frame.shape[:2]
+        for i in range(6):
+            for j in range(5):
+                cv2.circle(frame, (int(height/5*i), int(width/4*j)), 10, (0, 0, 255), -1)
