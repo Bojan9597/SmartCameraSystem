@@ -228,54 +228,155 @@ class MainWindow(QWidget):
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"Error in login handler: \n {e}")
 
+    # def update_video_frames(self):
+    #     try:
+    #         if self.readWA and self.captureWA is not None and self.captureWA.isOpened():
+                
+    #             retWA, frameWA = self.captureWA.read()
+    #             if retWA == False:
+    #                 self.captureWA = cv2.VideoCapture(self.camera_url_wa)
+    #             if retWA:
+                    
+    #                 frameWA_rgb = cv2.cvtColor(frameWA, cv2.COLOR_BGR2RGB)
+    #                 start_time = time.time()
+    #                 self.add_dots_on_image(frameWA_rgb)
+    #                 imageWA = QImage(
+    #                     frameWA_rgb.data,
+    #                     frameWA_rgb.shape[1],
+    #                     frameWA_rgb.shape[0],
+    #                     QImage.Format_RGB888
+    #                 )
+    #                 scaled_imageWA = imageWA.scaled(
+    #                     self.left_label.width(),
+    #                     self.left_label.height(),
+    #                     Qt.KeepAspectRatio
+    #                 )
+    #                 self.left_label.setPixmap(QPixmap.fromImage(scaled_imageWA))
+    #                 end_time = time.time()
+    #                 period  = end_time - start_time
+    #                 frequency = 1/period
+    #                 print(f"WA FPS: {frequency}")
+
+    #     except Exception as e:
+    #         ErrorHandler.displayErrorMessage(f"This is error in updating WA frames: \n {e}")
+    #     try:
+    #         if self.readPTZ and self.capturePTZ is not None and self.capturePTZ.isOpened():
+    #             retPTZ, framePTZ = self.capturePTZ.read()
+    #             if retPTZ == False:
+    #                 self.capturePTZ = cv2.VideoCapture(self.camera_url_ptz)
+    #             if retPTZ:
+    #                 framePTZ_rgb = cv2.cvtColor(framePTZ, cv2.COLOR_BGR2RGB)
+    #                 # Add the red cross to the frame
+    #                 self.add_red_cross(framePTZ_rgb)
+
+    #                 imagePTZ = QImage(
+    #                     framePTZ_rgb.data,
+    #                     framePTZ_rgb.shape[1],
+    #                     framePTZ_rgb.shape[0],
+    #                     QImage.Format_RGB888
+    #                 )
+    #                 scaled_imagePTZ = imagePTZ.scaled(
+    #                     self.right_label.width(),
+    #                     self.right_label.height(),
+    #                     Qt.KeepAspectRatio
+    #                 )
+    #                 self.right_label.setPixmap(QPixmap.fromImage(scaled_imagePTZ))
+    #     except Exception as e:
+    #         ErrorHandler.displayErrorMessage(f"This is error in updating PTZ frames: \n {e}")
+
     def update_video_frames(self):
-        try:
-            if self.readWA and self.captureWA is not None and self.captureWA.isOpened():
-                retWA, frameWA = self.captureWA.read()
-                if retWA == False:
-                    self.captureWA = cv2.VideoCapture(self.camera_url_wa)
-                if retWA:
-                    frameWA_rgb = cv2.cvtColor(frameWA, cv2.COLOR_BGR2RGB)
-                    self.add_dots_on_image(frameWA_rgb)
-                    imageWA = QImage(
-                        frameWA_rgb.data,
-                        frameWA_rgb.shape[1],
-                        frameWA_rgb.shape[0],
-                        QImage.Format_RGB888
-                    )
-                    scaled_imageWA = imageWA.scaled(
-                        self.left_label.width(),
-                        self.left_label.height(),
-                        Qt.KeepAspectRatio
-                    )
-                    self.left_label.setPixmap(QPixmap.fromImage(scaled_imageWA))
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"This is error in updating WA frames: \n {e}")
-        try:
-            if self.readPTZ and self.capturePTZ is not None and self.capturePTZ.isOpened():
-                retPTZ, framePTZ = self.capturePTZ.read()
-                if retPTZ == False:
-                    self.capturePTZ = cv2.VideoCapture(self.camera_url_ptz)
-                if retPTZ:
-                    framePTZ_rgb = cv2.cvtColor(framePTZ, cv2.COLOR_BGR2RGB)
-                    # Add the red cross to the frame
-                    self.add_red_cross(framePTZ_rgb)
+            
+            try:
+                if self.readWA and self.captureWA is not None and self.captureWA.isOpened():
+                    retWA, frameWA = self.captureWA.read()
+                    if retWA == False:
+                        self.captureWA = cv2.VideoCapture(self.camera_url_wa)
+                    if retWA:
+                        frameWA_rgb = cv2.cvtColor(frameWA, cv2.COLOR_BGR2RGB)
+                        start_time = time.time()
+                        self.add_dots_on_image(frameWA_rgb)
+                        # Define the desired width and height of the label
+                        desired_width = self.left_label.width()
+                        desired_height = self.left_label.height()
+                        
+                        # Calculate the aspect ratio of the image
+                        image_width = frameWA_rgb.shape[1]
+                        image_height = frameWA_rgb.shape[0]
+                        aspect_ratio = image_width / image_height
 
-                    imagePTZ = QImage(
-                        framePTZ_rgb.data,
-                        framePTZ_rgb.shape[1],
-                        framePTZ_rgb.shape[0],
-                        QImage.Format_RGB888
-                    )
-                    scaled_imagePTZ = imagePTZ.scaled(
-                        self.right_label.width(),
-                        self.right_label.height(),
-                        Qt.KeepAspectRatio
-                    )
-                    self.right_label.setPixmap(QPixmap.fromImage(scaled_imagePTZ))
-        except Exception as e:
-            ErrorHandler.displayErrorMessage(f"This is error in updating PTZ frames: \n {e}")
+                        # Calculate the new dimensions while maintaining the aspect ratio
+                        if desired_width / aspect_ratio <= desired_height:
+                            new_width = desired_width
+                            new_height = int(new_width / aspect_ratio)
+                        else:
+                            new_height = desired_height
+                            new_width = int(new_height * aspect_ratio)
 
+                        # Resize the image using cv2.resize
+                        resized_image = cv2.resize(frameWA_rgb, (new_width, new_height))
+
+                        # Convert the resized image to QImage
+                        imageWA = QImage(resized_image.data, new_width, new_height, QImage.Format_RGB888)
+
+                        # Create QPixmap from QImage
+                        pixmap = QPixmap.fromImage(imageWA)
+
+                        # Set the QPixmap in QLabel
+                        self.left_label.setPixmap(pixmap)
+                        self.left_label.setScaledContents(True)
+                        self.left_label.setFixedSize(new_width, new_height)
+                        end_time = time.time()
+                        period = end_time - start_time
+                        frequency = 1 / period
+                        print(f"FPS: {frequency}")
+            except Exception as e:
+                ErrorHandler.displayErrorMessage(f"This is error in updating WA frames: \n {e}")
+            try:
+                if self.readPTZ and self.capturePTZ is not None and self.capturePTZ.isOpened():
+                    retPTZ, framePTZ = self.capturePTZ.read()
+                    if retPTZ == False:
+                        self.capturePTZ = cv2.VideoCapture(self.camera_url_ptz)
+                    if retPTZ:
+                        start_time = time.time()
+                        framePTZ_rgb = cv2.cvtColor(framePTZ, cv2.COLOR_BGR2RGB)
+                        # Add the red cross to the frame
+                        self.add_red_cross(framePTZ_rgb)
+
+                        desired_width = self.right_label.width()
+                        desired_height = self.right_label.height()
+
+                        # Calculate the aspect ratio of the image
+                        image_width = framePTZ_rgb.shape[1]
+                        image_height = framePTZ_rgb.shape[0]
+                        aspect_ratio = image_width / image_height
+
+                        # Calculate the new dimensions while maintaining the aspect ratio
+                        if desired_width / aspect_ratio <= desired_height:
+                            new_width = desired_width
+                            new_height = int(new_width / aspect_ratio)
+                        else:
+                            new_height = desired_height
+                            new_width = int(new_height * aspect_ratio)
+
+                        # Resize the image using cv2.resize
+                        resized_image = cv2.resize(framePTZ_rgb, (new_width, new_height))
+
+                        # Convert the resized image to QImage
+                        imagePTZ = QImage(resized_image.data, new_width, new_height, QImage.Format_RGB888)
+
+                        # Create QPixmap from QImage
+                        pixmap = QPixmap.fromImage(imagePTZ)
+
+                        # Set the QPixmap in QLabel
+                        self.right_label.setPixmap(pixmap)
+                        self.right_label.setScaledContents(True)
+                        self.right_label.setFixedSize(new_width, new_height)
+                        end_time = time.time()
+                        period = end_time - start_time
+                        frequency = 1 / period
+                        print(f"FPS11111: {frequency}")
+            except Exception as e:
+                ErrorHandler.displayErrorMessage(f"This is error in updating PTZ frames: \n {e}")
     def add_red_cross(self, frame):
         try:
             # Get the frame dimensions
