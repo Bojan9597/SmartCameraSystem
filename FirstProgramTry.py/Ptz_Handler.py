@@ -1,3 +1,4 @@
+import sys
 from pynput import keyboard
 from onvif import ONVIFCamera
 import zeep
@@ -139,6 +140,7 @@ class Ptz_Handler:
                         else:
                             txt.write("%.2f\t--\t%s\n" % (t, "-"))
                             txt.flush()
+
                 except Exception as e:
                     ErrorHandler.displayErrorMessage(f"This is error in handle key press in PTZ handler: \n {e}")
 

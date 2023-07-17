@@ -263,7 +263,9 @@ class MainWindow(QWidget):
                     self.captureWALock.acquire()  # Acquire the lock
                     retWA, frameWA = self.captureWA.read()
                     self.captureWALock.release()  # Release the lock
-                
+
+                if retWA == False:
+                    self.captureWA = cv2.VideoCapture(self.camera_url_wa)
                 if retWA:
                     frameWA_rgb = cv2.cvtColor(frameWA, cv2.COLOR_BGR2RGB)
                     start_time = time.time()
@@ -293,6 +295,9 @@ class MainWindow(QWidget):
                     self.capturePTZLock.acquire()  # Acquire the lock
                     retPTZ, framePTZ = self.capturePTZ.read()
                     self.capturePTZLock.release()  # Release the lock
+
+                if retPTZ == False:
+                    self.capturePTZ = cv2.VideoCapture(self.camera_url_ptz)
                 if retPTZ:
                     framePTZ_rgb = cv2.cvtColor(framePTZ, cv2.COLOR_BGR2RGB)
                     # Add the red cross to the frame
