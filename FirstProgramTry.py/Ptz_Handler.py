@@ -91,7 +91,7 @@ class Ptz_Handler:
 
                     t = time.time() - t0
 
-                    if key == "w" or key == "Key.up":  # w
+                    if key == "W" or key == "w" or key == "Key.up":  # w
                         self.move_up(MainWindow, MainWindow.ptz)
                         print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
                         if txt is None:
@@ -99,7 +99,7 @@ class Ptz_Handler:
                         else:
                             txt.write("%.2f\t--\t%s\n" % (t, "^"))
                             txt.flush()
-                    if key == "s" or key == "Key.down":  # s
+                    if key == "S" or key == "s" or key == "Key.down":  # s
                         self.move_down(MainWindow, MainWindow.ptz)
                         print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
                         if txt is None:
@@ -107,7 +107,7 @@ class Ptz_Handler:
                         else:
                             txt.write("%.2f\t--\t%s\n" % (t, "v"))
                             txt.flush()
-                    if key == "a" or key == "Key.left":  # a
+                    if key == "A" or key == "a" or key == "Key.left":  # a
                         self.move_left(MainWindow, MainWindow.ptz)
                         print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
                         if txt is None:
@@ -115,7 +115,7 @@ class Ptz_Handler:
                         else:
                             txt.write("%.2f\t--\t%s\n" % (t, "<"))
                             txt.flush()
-                    if key == "d" or key == "Key.right":  # d
+                    if key == "D" or key == "d" or key == "Key.right":  # d
                         self.move_right(MainWindow, MainWindow.ptz)
                         print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
                         if txt is None:
@@ -123,7 +123,7 @@ class Ptz_Handler:
                         else:
                             txt.write("%.2f\t--\t%s\n" % (t, ">"))
                             txt.flush()
-                    if key == "i":  # p
+                    if key == "I" or key == "i":  # p
                         self.zoom_up(MainWindow, MainWindow.ptz)
                         print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
                         if txt is None:
@@ -131,7 +131,7 @@ class Ptz_Handler:
                         else:
                             txt.write("%.2f\t--\t%s\n" % (t, "+"))
                             txt.flush()
-                    if key == "o":  # m
+                    if key == "O" or key == "o":  # m
                         self.zoom_down(MainWindow, MainWindow.ptz)
                         print(self.get_position(MainWindow ,MainWindow.ptz, MainWindow.media_profile))
                         if txt is None:
