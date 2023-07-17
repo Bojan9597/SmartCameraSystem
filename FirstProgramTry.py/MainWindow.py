@@ -1,7 +1,7 @@
 import cv2
 from PySide2.QtWidgets import QApplication, QWidget, QLabel, QGridLayout, QLineEdit, QMessageBox, QSizePolicy, QDesktopWidget, QPushButton
 from PySide2.QtGui import QImage, QPixmap, QFont
-from PySide2.QtCore import Qt, QTimer, Slot
+from PySide2.QtCore import Qt, QTimer, Slot, QCoreApplication, QThread
 from Ptz_Handler import *
 from ErrorHandler import ErrorHandler
 import threading
@@ -105,9 +105,6 @@ class MainWindow(QWidget):
         self.capturePTZ = None
         self.readWA = False
         self.readPTZ = False
-        # self.timer = QTimer(self)
-        # self.timer.timeout.connect(self.update_video_frames)
-        # self.timer.start(1)  # Set the desired frame update interval (in milliseconds)
 
         # Enable mouse tracking on the labels
         self.left_label.setMouseTracking(True)
@@ -116,9 +113,6 @@ class MainWindow(QWidget):
         # Connect mouse press event to the labels
         self.left_label.mousePressEvent = self.left_label_mousePressEvent
         self.register_button.mousePressEvent = self.register_button_mousePressEvent
-        # self.left_label.mousePressEvent = lambda event: left_label_mousePressEvent(self, event)
-        # self.register_button.mousePressEvent = lambda event: register_button_mousePressEvent(self, event)
-
     ###############################   Functions  ################################################################
     @Slot(str, bool)
     def handleFileSelected(self, selectedFile, isNewCalibration):
@@ -163,7 +157,8 @@ class MainWindow(QWidget):
             capture = cv2.VideoCapture(camera_url)
 
             timeout_seconds = 7
-            connect_thread = threading.Thread(target=capture.open(camera_url)) 
+            connect_thread = threading.Thread(target=lambda camera_url: capture.open(camera_url),
+                                              args=(camera_url,))
             connect_thread.start()
             connect_thread.join(timeout_seconds)
 
@@ -181,6 +176,8 @@ class MainWindow(QWidget):
                 self.frameWidthWA, self.frameHeightWA = self.captureWA.get(cv2.CAP_PROP_FRAME_WIDTH), self.captureWA.get(cv2.CAP_PROP_FRAME_HEIGHT)
                 calculateWindowCoordinates(self, source, self.frameWidthWA,self.frameHeightWA)
                 self.wa_thread = Thread(target = self.readWa)
+                self.wa_thread.daemon = True
+
                 self.wa_thread.start()
                 print(
                     f"Login successful for source 1. Username: {username}, IP Address: {ip_address}")
@@ -198,6 +195,8 @@ class MainWindow(QWidget):
                 self.capturePTZ = capture
                 self.readPTZ = True
                 self.ptz_thread = Thread(target = self.readPtz)
+                self.ptz_thread.daemon = True
+                
                 self.ptz_thread.start()
                 self.frameWidthPTZ, self.frameHeightPTZ = self.capturePTZ.get(cv2.CAP_PROP_FRAME_WIDTH), self.capturePTZ.get(cv2.CAP_PROP_FRAME_HEIGHT)
                 calculateWindowCoordinates(self, source, self.frameWidthPTZ, self.frameHeightPTZ)
@@ -231,11 +230,6 @@ class MainWindow(QWidget):
             print("Login successful! Streaming video...")
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"Error in login handler: \n {e}")
-
-    def update_video_frames(self):
-        pass
-
-
 
     def add_red_cross(self, frame):
         try:
