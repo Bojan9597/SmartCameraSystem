@@ -152,86 +152,80 @@ class MainWindow(QWidget):
     def handleLogin(self, source, username, password, ip_address, selectedFile, isNewCalibraion):
 
         try:
-            try:
-                self.isNewCalibration = isNewCalibraion
-                if self.isNewCalibration:
-                    pass
-                elif self.coordinates == []:
-                    self.coordinates.extend(self.readCoordinatesFromFile(self.selectedFile))
+            self.isNewCalibration = isNewCalibraion
+            if self.isNewCalibration:
+                pass
+            elif self.coordinates == []:
+                self.coordinates.extend(self.readCoordinatesFromFile(self.selectedFile))
 
-                # Write the coordinates to the file
-                camera_url = self.getOnvifStream(username,password,ip_address)
-                capture = cv2.VideoCapture(camera_url)
-                
-                timeout_seconds = 7
-                connect_thread = threading.Thread(target=capture.open(camera_url))
-                connect_thread.start()
-                connect_thread.join(timeout_seconds)
+            # Write the coordinates to the file
+            camera_url = self.getOnvifStream(username,password,ip_address)
+            capture = cv2.VideoCapture(camera_url)
 
-                if connect_thread.is_alive() or not capture.isOpened():
-                    # Connection attempt timed out or failed
-                    capture.release()
-                    ErrorHandler.displayMessage(
-                        "Failed to connect to the camera. Please check the credentials and camera settings.")
-                    return
+            timeout_seconds = 7
+            connect_thread = threading.Thread(target=capture.open(camera_url)) 
+            connect_thread.start()
+            connect_thread.join(timeout_seconds)
 
-                if source == "1":
-                    self.camera_url_wa = camera_url
-                    self.captureWA = capture
-                    self.readWA = True
-                    self.frameWidthWA, self.frameHeightWA = self.captureWA.get(cv2.CAP_PROP_FRAME_WIDTH), self.captureWA.get(cv2.CAP_PROP_FRAME_HEIGHT)
-                    calculateWindowCoordinates(self, source, self.frameWidthWA,self.frameHeightWA)
-                    self.wa_thread = Thread(target = self.readWa)
-                    self.wa_thread.start()
-                    print(
-                        f"Login successful for source 1. Username: {username}, Password: {password}, IP Address: {ip_address}")
-                    try:
-                        with open("ConfigurationWA.txt", "w") as f:
-                            f.write(f"{username}\n")
-                            f.write(f"{password}\n")
-                            f.write(f"{ip_address}\n")
-                            f.write(
-                                f"{self.captureWA.get(cv2.CAP_PROP_FRAME_WIDTH)} , {self.captureWA.get(cv2.CAP_PROP_FRAME_HEIGHT)} \n")
-                    except Exception as e:
-                        ErrorHandler.displayErrorMessage("Can not open file ConfigurationWA.txt")
-                elif source == "2":
-                    self.camera_url_ptz = camera_url
-                    self.capturePTZ = capture
-                    self.readPTZ = True
-                    self.ptz_thread = Thread(target = self.readPtz)
-                    self.ptz_thread.start()
-                    self.frameWidthPTZ, self.frameHeightPTZ = self.capturePTZ.get(cv2.CAP_PROP_FRAME_WIDTH), self.capturePTZ.get(cv2.CAP_PROP_FRAME_HEIGHT)
-                    calculateWindowCoordinates(self, source, self.frameWidthPTZ, self.frameHeightPTZ)
-                    print(
-                        f"Login successful for source 2. Username: {username}, Password: {password}, IP Address: {ip_address}")
-                    try:
-                        with open("ConfigurationPTZ.txt", "w") as f:
-                            f.write(f"{username}\n")
-                            f.write(f"{password}\n")
-                            f.write(f"{ip_address}\n")
-                            f.write(
-                                f"{self.capturePTZ.get(cv2.CAP_PROP_FRAME_WIDTH)} , {self.capturePTZ.get(cv2.CAP_PROP_FRAME_HEIGHT)} \n")
-                    except Exception as e:
-                        ErrorHandler.displayErrorMessage("Can not open file ConfigurationPTZ.txt")
-                # Continue with streaming video
-                print("Login successful! Streaming video...")
-            except Exception as e:
-                ErrorHandler.displayErrorMessage(f"Error in login handler: \n {e}")
+            if connect_thread.is_alive() or not capture.isOpened():
+                # Connection attempt timed out or failed
+                capture.release()
+                ErrorHandler.displayMessage(
+                    "Failed to connect to the camera. Please check the credentials and camera settings.")
+                return
 
-            # Check if the PTZ camera is successfully loaded
+            if source == "1":
+                self.camera_url_wa = camera_url
+                self.captureWA = capture
+                self.readWA = True
+                self.frameWidthWA, self.frameHeightWA = self.captureWA.get(cv2.CAP_PROP_FRAME_WIDTH), self.captureWA.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                calculateWindowCoordinates(self, source, self.frameWidthWA,self.frameHeightWA)
+                self.wa_thread = Thread(target = self.readWa)
+                self.wa_thread.start()
+                print(
+                    f"Login successful for source 1. Username: {username}, IP Address: {ip_address}")
+                try:
+                    with open("ConfigurationWA.txt", "w") as f:
+                        f.write(f"{username}\n")
+                        f.write(f"{password}\n")
+                        f.write(f"{ip_address}\n")
+                        f.write(
+                            f"{self.captureWA.get(cv2.CAP_PROP_FRAME_WIDTH)} , {self.captureWA.get(cv2.CAP_PROP_FRAME_HEIGHT)} \n")
+                except Exception as e:
+                    ErrorHandler.displayErrorMessage("Can not open file ConfigurationWA.txt")
+            elif source == "2":
+                self.camera_url_ptz = camera_url
+                self.capturePTZ = capture
+                self.readPTZ = True
+                self.ptz_thread = Thread(target = self.readPtz)
+                self.ptz_thread.start()
+                self.frameWidthPTZ, self.frameHeightPTZ = self.capturePTZ.get(cv2.CAP_PROP_FRAME_WIDTH), self.capturePTZ.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                calculateWindowCoordinates(self, source, self.frameWidthPTZ, self.frameHeightPTZ)
+                print(
+                    f"Login successful for source 2. Username: {username}, IP Address: {ip_address}")
+                try:
+                    with open("ConfigurationPTZ.txt", "w") as f:
+                        f.write(f"{username}\n")
+                        f.write(f"{password}\n")
+                        f.write(f"{ip_address}\n")
+                        f.write(
+                            f"{self.capturePTZ.get(cv2.CAP_PROP_FRAME_WIDTH)} , {self.capturePTZ.get(cv2.CAP_PROP_FRAME_HEIGHT)} \n")
+                except Exception as e:
+                    ErrorHandler.displayErrorMessage("Can not open file ConfigurationPTZ.txt")
+            # Continue with streaming video
+            print("Login successful! Streaming video...")
+
+            # Check if the PTZ camera is not successfully loaded
             if source == "2" and (not self.capturePTZ.isOpened() or not self.readPTZ):
                 return
 
-            # Check if the WA camera is successfully loaded
+            # Check if the WA camera is not successfully loaded
             if source == "1" and (not self.captureWA.isOpened() or not self.readWA):
                 return
 
             camera_data = {"ip": ip_address, "port": 80, "username": username, "password": password}
             if source == "2":
-                if self.saveprefix != "":
-                    self.ptz_handler.make_ptz_handler(self, self.saveprefix + ".txt", camera_data)
-                else:
-                    self.ptz_handler.make_ptz_handler(self, None, camera_data)
+                self.ptz_handler.make_ptz_handler(self, None, camera_data)
 
             # Continue with streaming video
             print("Login successful! Streaming video...")
