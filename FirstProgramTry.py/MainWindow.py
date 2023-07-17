@@ -122,6 +122,30 @@ class MainWindow(QWidget):
             pass
         elif self.coordinates == []:
             self.coordinates.extend(self.readCoordinatesFromFile(self.selectedFile))
+    
+    def keyPressEvent(self, event):
+        try:
+            key = event.key()
+            if key == Qt.Key_U:  # 'u' key
+                self.isWAChoosed = False
+                if len(self.coordinates) % 5 != 0:  # Length is not divisible by 5
+                    if len(self.coordinates) >= 2:
+                        self.coordinates.pop()
+                        self.coordinates.pop()
+                elif len(self.coordinates) % 5 == 0:  # Length is divisible by 5
+                    if len(self.coordinates) >= 5:
+                        for _ in range(5):
+                            self.coordinates.pop()
+                ErrorHandler.displayMessage(f"Last coordinates are removed")
+                print(self.coordinates)
+            elif key == Qt.Key_E:  # 'e' key
+                self.coordinates = []
+                ErrorHandler.displayMessage(f"Coordinates emptied")
+            elif key == Qt.Key_Q:  # 'q' key
+                sys.exit()
+        except Exception as e:
+            ErrorHandler.displayErrorMessage(f"Error in handling key press events: \n {e}")
+    
     def getOnvifStream(self, username,password,ip_address):
         camera = ONVIFCamera(ip_address, 80, username, password)
 
