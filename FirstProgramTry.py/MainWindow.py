@@ -162,12 +162,9 @@ class MainWindow(QWidget):
                 # Write the coordinates to the file
                 camera_url = self.getOnvifStream(username,password,ip_address)
                 capture = cv2.VideoCapture(camera_url)
-
-                def connect_to_camera():
-                    capture.open(camera_url)
-
+                
                 timeout_seconds = 7
-                connect_thread = threading.Thread(target=connect_to_camera)
+                connect_thread = threading.Thread(target=capture.open(camera_url))
                 connect_thread.start()
                 connect_thread.join(timeout_seconds)
 
