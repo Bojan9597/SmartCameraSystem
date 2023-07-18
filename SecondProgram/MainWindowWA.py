@@ -28,8 +28,8 @@ class MainWindowWA(QWidget):
         self.fileIsSelected = False
         self.setWindowTitle("Main Window WA")
         screen = QDesktopWidget().screenGeometry()
-        self.screenWidth = screen.width()*2//3
-        self.screenHeight = screen.height()*2//3
+        self.screenWidth = screen.width()
+        self.screenHeight = screen.height()
 
         # Create a label for displaying the camera name
         self.camera_label = QLabel("WA Camera")
@@ -123,10 +123,10 @@ class MainWindowWA(QWidget):
             width, height = map(float, cameraResolution)
             aspectRatioWA = height/width
             screen = QGuiApplication.primaryScreen().availableGeometry()
-            self.setGeometry(10, 10, self.screenWidth , int(self.screenWidth * aspectRatioWA) + 2*self.camera_label.height())
+            self.setGeometry(10, 10, screen.width() , int((screen.width()) * aspectRatioWA) + 2*self.camera_label.height())
 
             self.setMaximumSize(screen.width() , int((screen.width()) * aspectRatioWA) + 2*self.camera_label.height())
-            self.video_label.setMaximumSize(self.screenWidth, int((self.screenWidth) * aspectRatioWA))
+            self.video_label.setMaximumSize(screen.width(), int((screen.width()) * aspectRatioWA))
             self.camera_url_wa = self.getOnvifStream(usernameWA,passwordWA,ip_addressWA)
             self.captureWA = cv2.VideoCapture(self.camera_url_wa)
             self.readWA = True
