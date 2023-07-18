@@ -10,6 +10,8 @@ from ErrorHandler import ErrorHandler
 from onvif import ONVIFCamera
 from PySide2.QtGui import QGuiApplication, QScreen
 from threading import Thread
+import threading
+import time
 
 class MainWindowWA(QWidget):
     camera_url_WA = ""
@@ -30,6 +32,8 @@ class MainWindowWA(QWidget):
         screen = QDesktopWidget().screenGeometry()
         self.screenWidth = screen.width()
         self.screenHeight = screen.height()
+        self.frameWidth = 0
+        self.frameHeight = 0
 
         # Create a label for displaying the camera name
         self.camera_label = QLabel("WA Camera")
@@ -60,6 +64,7 @@ class MainWindowWA(QWidget):
         # Start capturing video frames
         self.captureWA = None
         self.readWA = False
+        self.captureWALock = threading.Lock()
         self.handleLoginWA()
         # Enable mouse tracking on the label
         self.video_label.setMouseTracking(True)
@@ -84,6 +89,8 @@ class MainWindowWA(QWidget):
     def video_label_mousePressEvent(self, event):
         try:
             if self.coordinatesCalculator is not None:
+                if not self.captureWALock.locked():
+                    self.captureWALock.acquire()
                 if self.captureWA is not None and self.captureWA.isOpened():
                     # Get the mouse position relative to the label
                     pos = self.video_label.mapFrom(self, event.pos())
@@ -91,21 +98,22 @@ class MainWindowWA(QWidget):
                     height_ratio = pos.y() / self.video_label.height()
                     
                     # Get the frame dimensions
-                    retWA, frameWA = self.captureWA.read()
-                    if retWA:
-                        frame_height, frame_width, _ = frameWA.shape
+                    if self.captureWALock.locked():
+                        self.captureWALock.release()
+  
+                    frame_width, frame_height= self.captureWA.get(cv2.CAP_PROP_FRAME_WIDTH),self.captureWA.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
-                        # Calculate the coordinates in the frame
-                        x = int(width_ratio * frame_width)
-                        y = int(height_ratio * frame_height)
+                    # Calculate the coordinates in the frame
+                    x = int(width_ratio * frame_width)
+                    y = int(height_ratio * frame_height)
 
-                        self.corespondingX = x
-                        self.corespondingY = y
-                        print(self.corespondingX, self.corespondingY)
+                    self.corespondingX = x
+                    self.corespondingY = y
+                    print(self.corespondingX, self.corespondingY)
 
-                        newX, newY = self.coordinatesCalculator.getTiltAndPan(x, y)
-                        print(f"Coordinates in the frame: ({newX}, {newY})")
-                        self.moveToPositionSignal.emit(newX, newY)
+                    newX, newY = self.coordinatesCalculator.getTiltAndPan(x, y)
+                    print(f"Coordinates in the frame: ({newX}, {newY})")
+                    self.moveToPositionSignal.emit(newX, newY)
             else:
                 ErrorHandler.displayErrorMessage("Select Calibration file")
 
@@ -160,6 +168,7 @@ class MainWindowWA(QWidget):
     
     def update_video_frames(self):
         while True:
+            time.sleep(0.02)
             try:
                 if self.readWA and self.captureWA is not None and self.captureWA.isOpened():
                     retWA, frameWA = self.captureWA.read()

@@ -9,6 +9,7 @@ from threading import Thread
 from onvif import ONVIFCamera
 from PySide2.QtGui import QGuiApplication, QImage
 import threading
+import time
 
 class MainWindowPTZ(QWidget):
     camera_url_PTZ = ""
@@ -91,11 +92,14 @@ class MainWindowPTZ(QWidget):
 
     def update_video_frames(self):
         while True:
+            time.sleep(0.02)
             try:
-                self.capturePTZLock.acquire()  # Acquire the lock
+                if not self.capturePTZLock.locked():
+                    self.capturePTZLock.acquire()  # Acquire the lock
                 if self.readPTZ and self.capturePTZ is not None and self.capturePTZ.isOpened():
                     retPTZ, framePTZ = self.capturePTZ.read()
-                    self.capturePTZLock.release()  # Release the lock
+                    if not self.capturePTZLock.locked():
+                        self.capturePTZLock.release()  # Release the lock
                     if retPTZ == False:
                         self.capturePTZ = cv2.VideoCapture(self.camera_url_ptz)
                     if retPTZ:
