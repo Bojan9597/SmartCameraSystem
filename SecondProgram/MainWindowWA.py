@@ -7,6 +7,10 @@ from PySide2.QtCore import Qt, QTimer
 from CoordinatesCalculator import CoordinatesCalculator
 from PySide2.QtCore import Signal
 from ErrorHandler import ErrorHandler
+from onvif import ONVIFCamera
+from PySide2.QtGui import QGuiApplication, QScreen
+from threading import Thread
+
 class MainWindowWA(QWidget):
     camera_url_WA = ""
     camera_url_wa = ""
@@ -52,13 +56,17 @@ class MainWindowWA(QWidget):
         grid.addWidget(self.camera_label, 0, 0)
         grid.addWidget(self.file_button, 1, 0)
         grid.addWidget(self.video_label, 2, 0)
-
+        
         # Start capturing video frames
         self.captureWA = None
         self.readWA = False
-
+        self.handleLoginWA()
         # Enable mouse tracking on the label
         self.video_label.setMouseTracking(True)
+        self.mousePressEvent = self.video_label_mousePressEvent
+        wa_thread = Thread(target = self.update_video_frames)
+        wa_thread.daemon = True
+        wa_thread.start()
 
     def choose_file(self):
         file_dialog = QFileDialog()
@@ -71,6 +79,109 @@ class MainWindowWA(QWidget):
         self.fileIsSelected = True
         self.file_button.setText(f"File is chosen: {self.selectedFile}")
         self.fileIsSelectedSignal.emit(self.selectedFile)
+        self.coordinatesCalculator = CoordinatesCalculator(self.selectedFile)
+
+    def video_label_mousePressEvent(self, event):
+        try:
+            if self.coordinatesCalculator != None:
+                if self.captureWA is not None and self.captureWA.isOpened():
+
+                    # Get the mouse position relative to the label
+                    pos = event.pos()
+                    width_ratio = pos.x() / self.width()
+                    height_ratio = pos.y() / self.height()
+                    print("hah")
+                    # Get the frame dimensions
+                    retWA, frameWA = self.captureWA.read()
+                    if retWA:
+                        frame_height, frame_width, _ = frameWA.shape
+
+                        # Calculate the coordinates in the frame
+                        x = int(width_ratio * frame_width)
+                        y = int(height_ratio * frame_height)
+
+                        # Calculate the coordinates in the frame
+                        self.corespondingX = x
+                        self.corespondingY = y
+                        print(self.corespondingX, self.corespondingY)
+                        print("this bellow is x, y")
+                        print(x,y)
+                        newX, newY = self.coordinatesCalculator.getTiltAndPan(x, y)
+                        print(f"Coordinates in the frame: ({newX}, {newY})")
+                        self.moveToPositionSignal.emit(newX,newY)
+            else:
+                ErrorHandler.displayErrorMessage("Select Calibration file")
+
+        except Exception as e:
+            ErrorHandler.displayErrorMessage(f"This is error in mouse press event for WA camera: \n {e}")
+
+    def handleLoginWA(self):
+        try:
+            with open('../ConfigurationWA.txt', 'r') as f:
+                usernameWA = f.readline().strip()
+                passwordWA = f.readline().strip()
+                ip_addressWA = f.readline().strip()
+                cameraResolution = f.readline().strip().split(', ')
+
+            width, height = map(float, cameraResolution)
+            aspectRatioWA = height/width
+            screen = QGuiApplication.primaryScreen().availableGeometry()
+            self.setGeometry(10, 10, screen.width() , int((screen.width()) * aspectRatioWA) + 2*self.camera_label.height())
+
+            self.setMaximumSize(screen.width() , int((screen.width()) * aspectRatioWA) + 2*self.camera_label.height())
+            self.video_label.setMaximumSize(screen.width(), int((screen.width()) * aspectRatioWA))
+            self.camera_url_wa = self.getOnvifStream(usernameWA,passwordWA,ip_addressWA)
+            self.captureWA = cv2.VideoCapture(self.camera_url_wa)
+            self.readWA = True
+            print(
+                f"Login successful for source 1. Username: {usernameWA}, Password: {passwordWA}, IP Address: {ip_addressWA}")
+            print("Login successful! Streaming video...")
+        except Exception as e:
+
+            ErrorHandler.displayErrorMessage(f"This is error in login handler for WA \n{e}")
 
 
+    def getOnvifStream(self, username,password,ip_address):
+        camera = ONVIFCamera(ip_address, 80, username, password)
 
+        # Get media service
+        media_service = camera.create_media_service()
+
+        # Get available profiles
+        profiles = media_service.GetProfiles()
+
+        # Select the first profile
+        profile_token = profiles[0].token
+        # Get the stream URI
+        stream_uri = media_service.GetStreamUri({
+        'StreamSetup': {'Stream': 'RTP-Unicast', 'Transport': {'Protocol': 'RTSP'}},
+        'ProfileToken': profile_token
+        })
+        camera_url =  stream_uri.Uri
+        camera_url = camera_url.replace('rtsp://', f"rtsp://{username}:{password}@")
+        return camera_url
+    
+    def update_video_frames(self):
+        while True:
+            try:
+                if self.readWA and self.captureWA is not None and self.captureWA.isOpened():
+                    retWA, frameWA = self.captureWA.read()
+                    if retWA == False:
+                        self.captureWA = cv2.VideoCapture(self.camera_url_wa)
+                    if retWA:
+                        frameWA_rgb = cv2.cvtColor(frameWA, cv2.COLOR_BGR2RGB)
+
+                        imageWA = QImage(
+                            frameWA_rgb.data,
+                            frameWA_rgb.shape[1],
+                            frameWA_rgb.shape[0],
+                            QImage.Format_RGB888
+                        )
+                        scaled_imageWA = imageWA.scaled(
+                            self.video_label.width(),
+                            self.video_label.height(),
+                            Qt.KeepAspectRatio
+                        )
+                        self.video_label.setPixmap(QPixmap.fromImage(scaled_imageWA))
+            except Exception as e:
+                ErrorHandler.displayErrorMessage(f"This is error in updating WA frames: \n {e}")

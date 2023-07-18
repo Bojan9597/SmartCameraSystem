@@ -1,12 +1,14 @@
 import cv2
 from PySide2.QtWidgets import QWidget, QLabel, QGridLayout,QDesktopWidget
 from PySide2.QtGui import QPixmap
-from PySide2.QtCore import Qt, QTimer
-from CoordinatesCalculator import CoordinatesCalculator
+from PySide2.QtCore import Qt
 from PySide2.QtCore import Slot
 from ErrorHandler import ErrorHandler
 from Ptz_Handler import Ptz_Handler
 from threading import Thread
+from onvif import ONVIFCamera
+from PySide2.QtGui import QGuiApplication, QImage
+import threading
 
 class MainWindowPTZ(QWidget):
     camera_url_PTZ = ""
@@ -19,11 +21,11 @@ class MainWindowPTZ(QWidget):
         super().__init__()
         self.setWindowTitle("Main Window PTZ")
         screen = QDesktopWidget().screenGeometry()
+        self.selectedFile = ""
+        self.fileIsSelected = False
         self.screenWidth = screen.width()
         self.screenHeight = screen.height()
         self.ptz_handler = Ptz_Handler(self)
-        # Create a label for displaying the camera name
-        screen = QDesktopWidget().screenGeometry()
         initial_width = screen.width()
         initial_height = 650
         self.setMaximumWidth(initial_width)
@@ -37,10 +39,8 @@ class MainWindowPTZ(QWidget):
         self.video_label = QLabel()
         self.video_label.setAlignment(Qt.AlignCenter)
         # Set the background image for the video label
-        ptz_background = QPixmap(
-            "images/ptzCamera.png")
+        ptz_background = QPixmap("images/ptzCamera.png")
         self.video_label.setPixmap(ptz_background.scaled(self.width(), self.height(), Qt.KeepAspectRatio))
-
         # Create the grid layout for the main window
         grid = QGridLayout()
         self.setLayout(grid)
@@ -51,9 +51,15 @@ class MainWindowPTZ(QWidget):
 
         # Start capturing video frames
         self.capturePTZ = None
-        self.readPTZ = False
+        self.capturePTZLock = threading.Lock()
 
-        # self.handleLogin()
+        self.readPTZ = False
+        self.handleLoginPTZ()
+
+        ptz_thread = Thread(target=self.update_video_frames)
+        ptz_thread.daemon = True
+        ptz_thread.start()
+
 
     @Slot(float, float)
     def moveToPosition(self, x, y):
@@ -83,6 +89,96 @@ class MainWindowPTZ(QWidget):
         except Exception as e:
             ErrorHandler.displayErrorMessage(f"This is error in adding red cross: \n {e}")
 
+    def update_video_frames(self):
+        while True:
+            try:
+                self.capturePTZLock.acquire()  # Acquire the lock
+                if self.readPTZ and self.capturePTZ is not None and self.capturePTZ.isOpened():
+                    retPTZ, framePTZ = self.capturePTZ.read()
+                    self.capturePTZLock.release()  # Release the lock
+                    if retPTZ == False:
+                        self.capturePTZ = cv2.VideoCapture(self.camera_url_ptz)
+                    if retPTZ:
+                        framePTZ_rgb = cv2.cvtColor(framePTZ, cv2.COLOR_BGR2RGB)
+                        # Add the red cross to the frame
+                        self.add_red_cross(framePTZ_rgb)
 
+                        imagePTZ = QImage(
+                            framePTZ_rgb.data,
+                            framePTZ_rgb.shape[1],
+                            framePTZ_rgb.shape[0],
+                            QImage.Format_RGB888
+                        )
+                        scaled_imagePTZ = imagePTZ.scaled(
+                            self.video_label.width(),
+                            self.video_label.height(),
+                            Qt.KeepAspectRatio
+                        )
+                        self.video_label.setPixmap(QPixmap.fromImage(scaled_imagePTZ))
+            except Exception as e:
+                ErrorHandler.displayErrorMessage(f"This is error in updating PTZ frames: \n {e}")
+
+    def getOnvifStream(self, username,password,ip_address):
+        try:
+            camera = ONVIFCamera(ip_address, 80, username, password)
+
+            # Get media service
+            media_service = camera.create_media_service()
+
+            # Get available profiles
+            profiles = media_service.GetProfiles()
+
+            # Select the first profile
+            profile_token = profiles[0].token
+            # Get the stream URI
+            stream_uri = media_service.GetStreamUri({
+            'StreamSetup': {'Stream': 'RTP-Unicast', 'Transport': {'Protocol': 'RTSP'}},
+            'ProfileToken': profile_token
+            })
+            camera_url =  stream_uri.Uri
+            camera_url = camera_url.replace('rtsp://', f"rtsp://{username}:{password}@")
+            return camera_url
+        except Exception as e:
+            ErrorHandler.displayErrorMessage(f"This is error in getting ONVIF stream: \n {e}")
+            print(f"This is error in getting ONVIF stream: \n {e}")
+        
+    def handleLoginPTZ(self):
+        try:
+            with open('../ConfigurationPTZ.txt', 'r') as f:
+                usernamePTZ = f.readline().strip()
+                passwordPTZ = f.readline().strip()
+                ip_addressPTZ = f.readline().strip()
+                cameraResolution = f.readline().strip().split(', ')
+
+            width, height = map(float, cameraResolution)
+            aspectRatioPTZ =  height / width
+            screen = QGuiApplication.primaryScreen().availableGeometry()
+            self.setGeometry(10, 10, screen.width() , int((screen.width()) * aspectRatioPTZ) + 2*self.camera_label.height())
+
+            self.setMaximumSize(screen.width() , int((screen.width()) * aspectRatioPTZ) + 2*self.camera_label.height())
+            self.video_label.setMaximumSize(screen.width(), int((screen.width()) * aspectRatioPTZ))
+
+            self.camera_url_ptz = self.getOnvifStream(usernamePTZ,passwordPTZ,ip_addressPTZ)
+            self.capturePTZLock.acquire()  # Acquire the lock
+            self.capturePTZ = cv2.VideoCapture(self.camera_url_ptz)
+            self.capturePTZLock.release()  # Release the lock
+            self.readPTZ = True
+            print(
+                f"Login successful for source 1. Username: {usernamePTZ}, Password: {passwordPTZ}, IP Address: {ip_addressPTZ}")
+            print("Login successful! Streaming video...")
+
+            camera_data = {"ip": ip_addressPTZ, "port": 80, "username": usernamePTZ, "password": passwordPTZ}
+            self.ptz_handler.make_ptz_handler(self, None, camera_data)
+
+
+        except Exception as e:
+            ErrorHandler.displayErrorMessage(f"This is error in login handler for PTZ \n{e}")
+            print(e)
+
+
+    @Slot(str)
+    def handleIsFileSelected(self,selectedFile):
+        self.selectedFile = selectedFile
+    
 
 

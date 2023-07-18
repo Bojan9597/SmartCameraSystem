@@ -6,7 +6,6 @@ import cv2
 import numpy as np
 from scipy.interpolate import griddata
 from scipy.interpolate import Rbf
-from scipy.interpolate import RegularGridInterpolator
 from scipy.interpolate import LinearNDInterpolator
 from pykrige.ok import OrdinaryKriging
 
@@ -315,6 +314,6 @@ class CoordinatesCalculator:
 
 
 # Usage example:
-calculator = CoordinatesCalculator("../CoordinatesForCalibration.txt")
+# calculator = CoordinatesCalculator("../CoordinatesForCalibration.txt")
 
 # calculator.errorCalculation()

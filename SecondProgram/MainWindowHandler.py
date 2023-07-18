@@ -13,11 +13,9 @@ from PySide2.QtGui import QGuiApplication, QScreen
 
 class MainWindowHandler:
     screen = None
-    def __init__(self):
-        self.mainWindowWA = MainWindowWA()
-        self.mainWindowPTZ = MainWindowPTZ()
-        self.mainWindowWA.moveToPositionSignal.connect(self.mainWindowPTZ.moveToPosition)
-        self.mainWindowWA.mousePressEvent = self.video_label_mousePressEvent
+    def __init__(self, mainWIndowWA, mainWindowPTZ):
+        self.mainWindowWA = mainWIndowWA
+        self.mainWindowPTZ = mainWindowPTZ
         self.captureWA = None
         self.readWA = False
         self.capturePTZ = None
@@ -28,8 +26,8 @@ class MainWindowHandler:
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_video_frames)
         self.timer.start(1)  # Set the desired frame update interval (in milliseconds)
-        self.mainWindowWA.show()
-        self.mainWindowPTZ.show()
+        self.mainWindowWA.moveToPositionSignal.connect(self.mainWindowPTZ.moveToPosition)
+        self.mainWindowWA.mousePressEvent = self.video_label_mousePressEvent
 
     def update_video_frames(self):
         try:
