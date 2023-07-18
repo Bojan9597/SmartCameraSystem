@@ -1,6 +1,6 @@
 import sys
 from PySide2.QtWidgets import QApplication
-from MainWindowPTZ import MainWindowPTZ
+from MainWindowPtz import MainWindowPTZ
 from MainWindowWA import MainWindowWA
 
 if __name__ == '__main__':
