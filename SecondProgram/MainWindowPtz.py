@@ -157,10 +157,12 @@ class MainWindowPTZ(QWidget):
             width, height = map(float, cameraResolution)
             aspectRatioPTZ =  height / width
             screen = QGuiApplication.primaryScreen().availableGeometry()
-            self.setGeometry(10, 10, self.screenWidth , int((self.screenWidth) * aspectRatioPTZ) + 2*self.camera_label.height())
+            screenPosX = (screen.width())//4
+            self.setGeometry(screenPosX, 10, self.screenWidth , int((self.screenWidth) * aspectRatioPTZ) + 2*self.camera_label.height())
 
             self.setMaximumSize(screen.width() , int((screen.width()) * aspectRatioPTZ) + 2*self.camera_label.height())
             self.video_label.setMaximumSize(self.screenWidth, int((self.screenWidth) * aspectRatioPTZ))
+            self.video_label.setStyleSheet("border: 3px solid red;")
 
             self.camera_url_ptz = self.getOnvifStream(usernamePTZ,passwordPTZ,ip_addressPTZ)
             self.capturePTZLock.acquire()  # Acquire the lock
