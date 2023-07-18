@@ -28,8 +28,8 @@ class MainWindowWA(QWidget):
         self.fileIsSelected = False
         self.setWindowTitle("Main Window WA")
         screen = QDesktopWidget().screenGeometry()
-        self.screenWidth = screen.width()
-        self.screenHeight = screen.height()
+        self.screenWidth = screen.width()*2//3
+        self.screenHeight = screen.height()*2//3
 
         # Create a label for displaying the camera name
         self.camera_label = QLabel("WA Camera")
@@ -83,14 +83,13 @@ class MainWindowWA(QWidget):
 
     def video_label_mousePressEvent(self, event):
         try:
-            if self.coordinatesCalculator != None:
+            if self.coordinatesCalculator is not None:
                 if self.captureWA is not None and self.captureWA.isOpened():
-
                     # Get the mouse position relative to the label
-                    pos = event.pos()
-                    width_ratio = pos.x() / self.width()
-                    height_ratio = pos.y() / self.height()
-                    print("hah")
+                    pos = self.video_label.mapFrom(self, event.pos())
+                    width_ratio = pos.x() / self.video_label.width()
+                    height_ratio = pos.y() / self.video_label.height()
+                    
                     # Get the frame dimensions
                     retWA, frameWA = self.captureWA.read()
                     if retWA:
@@ -100,20 +99,18 @@ class MainWindowWA(QWidget):
                         x = int(width_ratio * frame_width)
                         y = int(height_ratio * frame_height)
 
-                        # Calculate the coordinates in the frame
                         self.corespondingX = x
                         self.corespondingY = y
                         print(self.corespondingX, self.corespondingY)
-                        print("this bellow is x, y")
-                        print(x,y)
+
                         newX, newY = self.coordinatesCalculator.getTiltAndPan(x, y)
                         print(f"Coordinates in the frame: ({newX}, {newY})")
-                        self.moveToPositionSignal.emit(newX,newY)
+                        self.moveToPositionSignal.emit(newX, newY)
             else:
                 ErrorHandler.displayErrorMessage("Select Calibration file")
 
         except Exception as e:
-            ErrorHandler.displayErrorMessage(f"This is error in mouse press event for WA camera: \n {e}")
+            ErrorHandler.displayErrorMessage(f"This is an error in the mouse press event for WA camera: \n {e}")
 
     def handleLoginWA(self):
         try:
@@ -126,10 +123,10 @@ class MainWindowWA(QWidget):
             width, height = map(float, cameraResolution)
             aspectRatioWA = height/width
             screen = QGuiApplication.primaryScreen().availableGeometry()
-            self.setGeometry(10, 10, screen.width() , int((screen.width()) * aspectRatioWA) + 2*self.camera_label.height())
+            self.setGeometry(10, 10, self.screenWidth , int(self.screenWidth * aspectRatioWA) + 2*self.camera_label.height())
 
             self.setMaximumSize(screen.width() , int((screen.width()) * aspectRatioWA) + 2*self.camera_label.height())
-            self.video_label.setMaximumSize(screen.width(), int((screen.width()) * aspectRatioWA))
+            self.video_label.setMaximumSize(self.screenWidth, int((self.screenWidth) * aspectRatioWA))
             self.camera_url_wa = self.getOnvifStream(usernameWA,passwordWA,ip_addressWA)
             self.captureWA = cv2.VideoCapture(self.camera_url_wa)
             self.readWA = True
